@@ -4,6 +4,7 @@ interface Props {
   value: number; // 0–100
   colour?: "emerald" | "amber" | "red" | "blue";
   height?: "xs" | "sm";
+  className?: string;
 }
 
 const colourMap = {
@@ -18,9 +19,9 @@ const heightMap = {
   sm: "h-1.5",
 };
 
-const ProgressBar: FC<Props> = ({ value, colour = "emerald", height = "sm" }) => (
+const ProgressBar: FC<Props> = ({ value, colour = "emerald", height = "sm", className }) => (
   <div
-    className={`w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden ${heightMap[height]}`}
+    className={`w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden ${heightMap[height]} ${className}`}
   >
     <div
       className={`h-full rounded-full transition-all duration-500 ${colourMap[colour]}`}

@@ -7,6 +7,10 @@ import { formatCurrency, formatPercent } from "../../utils/finance";
 import type { BundleItem, ExtraCost } from "../../types";
 import Button from "../1-atoms/Button";
 import Badge from "../1-atoms/Badge";
+import CostCell from "../1-atoms/CostCell";
+import ProfitValue from "../1-atoms/ProfitValue";
+import SectionHeader from "../1-atoms/SectionHeader";
+import EmptyState from "../1-atoms/EmptyState";
 import ItemRow from "../2-molecules/ItemRow";
 import ExtraCostRow from "../2-molecules/ExtraCostRow";
 import AddItemForm from "../3-organisms/AddItemForm";
@@ -22,11 +26,14 @@ const BundleDetailPage: FC = () => {
 
   if (!bundle) {
     return (
-      <div className="flex flex-col items-center justify-center py-20 text-center">
-        <span className="text-4xl mb-3">🔍</span>
-        <p className="text-slate-500 dark:text-slate-400 mb-4">Bundle not found.</p>
-        <Button onClick={() => dispatch(setView("bundles"))}>Back to Bundles</Button>
-      </div>
+      <EmptyState
+        icon="🔍"
+        title="Bundle not found"
+        description="This bundle may have been deleted."
+        action={
+          <Button onClick={() => dispatch(setView("bundles"))}>Back to Bundles</Button>
+        }
+      />
     );
   }
 
@@ -35,6 +42,7 @@ const BundleDetailPage: FC = () => {
 
   return (
     <div className="space-y-6 max-w-3xl">
+
       {/* Header */}
       <div className="flex items-start gap-4">
         <button
@@ -63,83 +71,43 @@ const BundleDetailPage: FC = () => {
 
       {/* Summary strip */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        {(
-          [
-            {
-              label: "Purchase Cost",
-              value: formatCurrency(bundle.purchaseCost),
-              colour: undefined,
-              sub: undefined,
-            },
-            {
-              label: "Extra Costs",
-              value: formatCurrency(totalExtraCosts),
-              colour: undefined,
-              sub: undefined,
-            },
-            {
-              label: "Total Invested",
-              value: formatCurrency(summary.totalInvested),
-              colour: undefined,
-              sub: undefined,
-            },
-            {
-              label: "Net P&L",
-              value: formatCurrency(summary.totalProfit),
-              colour:
-                summary.totalProfit >= 0
-                  ? "text-emerald-600 dark:text-emerald-400"
-                  : "text-red-600 dark:text-red-400",
-              sub:
-                summary.totalInvested > 0
-                  ? formatPercent(summary.profitMargin, true) + " margin"
-                  : undefined,
-            },
-          ] satisfies {
-            label: string;
-            value: string;
-            colour: string | undefined;
-            sub: string | undefined;
-          }[]
-        ).map((s) => (
-          <div
-            key={s.label}
-            className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4"
-          >
-            <p className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">
-              {s.label}
+        <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4">
+          <CostCell label="Purchase Cost" value={formatCurrency(bundle.purchaseCost)} />
+        </div>
+        <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4">
+          <CostCell label="Extra Costs" value={formatCurrency(totalExtraCosts)} />
+        </div>
+        <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4">
+          <CostCell label="Total Invested" value={formatCurrency(summary.totalInvested)} />
+        </div>
+        <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4">
+          <p className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">
+            Net P&L
+          </p>
+          <ProfitValue value={summary.totalProfit} size="lg" />
+          {summary.totalInvested > 0 && (
+            <p className="text-xs text-slate-400 mt-0.5">
+              {formatPercent(summary.profitMargin, true)} margin
             </p>
-            <p
-              className={`text-lg font-bold tabular-nums font-heading ${s.colour ?? "text-slate-900 dark:text-white"}`}
-            >
-              {s.value}
-            </p>
-            {s.sub && <p className="text-xs text-slate-400 mt-0.5">{s.sub}</p>}
-          </div>
-        ))}
+          )}
+        </div>
       </div>
 
       {/* Items section */}
       <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
-        <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100 dark:border-slate-800">
-          <div>
-            <h2 className="font-heading font-semibold text-slate-900 dark:text-white">Items</h2>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-              {summary.soldItemCount}/{bundle.items.length} sold · Min. sale price = cost ÷ items +
-              extras + 15% margin
-            </p>
-          </div>
-          <Button
-            size="sm"
-            variant="secondary"
-            onClick={() => {
-              setShowAddItem(true);
-              setShowAddCost(false);
-            }}
-          >
-            + Add Item
-          </Button>
-        </div>
+        <SectionHeader
+          title="Items"
+          subtitle={`${summary.soldItemCount}/${bundle.items.length} sold · Min. sale price = cost ÷ items + extras + 15% margin`}
+          action={
+            <Button
+              size="sm"
+              variant="secondary"
+              onClick={() => { setShowAddItem(true); setShowAddCost(false); }}
+            >
+              + Add Item
+            </Button>
+          }
+        />
 
         <div className="px-5">
           {bundle.items.length === 0 ? (
@@ -171,26 +139,19 @@ const BundleDetailPage: FC = () => {
 
       {/* Extra costs section */}
       <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
-        <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100 dark:border-slate-800">
-          <div>
-            <h2 className="font-heading font-semibold text-slate-900 dark:text-white">
-              Extra Costs
-            </h2>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-              Postage, car boot entry fees, packaging etc — split equally across all items
-            </p>
-          </div>
-          <Button
-            size="sm"
-            variant="secondary"
-            onClick={() => {
-              setShowAddCost(true);
-              setShowAddItem(false);
-            }}
-          >
-            + Add Cost
-          </Button>
-        </div>
+        <SectionHeader
+          title="Extra Costs"
+          subtitle="Postage, car boot entry fees, packaging etc — split equally across all items"
+          action={
+            <Button
+              size="sm"
+              variant="secondary"
+              onClick={() => { setShowAddCost(true); setShowAddItem(false); }}
+            >
+              + Add Cost
+            </Button>
+          }
+        />
 
         <div className="px-5">
           {bundle.extraCosts.length === 0 ? (
@@ -217,6 +178,7 @@ const BundleDetailPage: FC = () => {
         )}
       </div>
 
+      {/* Notes */}
       {bundle.notes && (
         <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-5 py-4">
           <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">
