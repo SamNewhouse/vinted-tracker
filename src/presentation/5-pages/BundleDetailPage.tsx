@@ -123,6 +123,7 @@ const BundleDetailPage: FC = () => {
               <ItemRow
                 key={item.id}
                 item={item}
+                bundleExtraCosts={bundle.extraCosts}
                 onMarkSold={(id: string) => {
                   const found = bundle.items.find((i: BundleItem) => i.id === id);
                   if (found) setSoldItem(found);
