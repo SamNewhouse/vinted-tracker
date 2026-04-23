@@ -1,41 +1,42 @@
-import { FC, memo, useState } from "react"
-import type { DraftCost, CostCategory } from "../../types"
-import Button from "../1-atoms/Button"
-import Input from "../1-atoms/Input"
-import Select from "../1-atoms/Select"
-import { COST_CATEGORIES } from "../../config/constants"
+"use client";
+import { FC, memo, useState } from "react";
+import type { DraftCost, CostCategory } from "../../types";
+import Button from "../1-atoms/Button";
+import Input from "../1-atoms/Input";
+import Select from "../1-atoms/Select";
+import { COST_CATEGORIES } from "../../config/constants";
 
 interface Props {
-  costs: DraftCost[]
-  totalInvested: number
-  onAdd: (cost: DraftCost) => void
-  onRemove: (tempId: string) => void
+  costs: DraftCost[];
+  totalInvested: number;
+  onAdd: (cost: DraftCost) => void;
+  onRemove: (tempId: string) => void;
 }
 
 const DraftCostList: FC<Props> = ({ costs, totalInvested, onAdd, onRemove }) => {
-  const [showForm, setShowForm] = useState(false)
-  const [label, setLabel] = useState("")
-  const [category, setCategory] = useState<CostCategory>("car_boot_entry")
-  const [amount, setAmount] = useState("")
-  const [costError, setCostError] = useState("")
+  const [showForm, setShowForm] = useState(false);
+  const [label, setLabel] = useState("");
+  const [category, setCategory] = useState<CostCategory>("car_boot_entry");
+  const [amount, setAmount] = useState("");
+  const [costError, setCostError] = useState("");
 
-  const selectedHint = COST_CATEGORIES.find((c) => c.value === category)?.hint
+  const selectedHint = COST_CATEGORIES.find((c) => c.value === category)?.hint;
 
   const handleAdd = () => {
-    const parsed = Number(amount)
+    const parsed = Number(amount);
     if (!amount || isNaN(parsed) || parsed <= 0) {
-      setCostError("Enter a valid amount")
-      return
+      setCostError("Enter a valid amount");
+      return;
     }
     const autoLabel =
-      label.trim() || COST_CATEGORIES.find((c) => c.value === category)?.label || "Extra cost"
-    onAdd({ tempId: `${Date.now()}`, label: autoLabel, category, amount: parsed })
-    setLabel("")
-    setCategory("car_boot_entry")
-    setAmount("")
-    setCostError("")
-    setShowForm(false)
-  }
+      label.trim() || COST_CATEGORIES.find((c) => c.value === category)?.label || "Extra cost";
+    onAdd({ tempId: `${Date.now()}`, label: autoLabel, category, amount: parsed });
+    setLabel("");
+    setCategory("car_boot_entry");
+    setAmount("");
+    setCostError("");
+    setShowForm(false);
+  };
 
   return (
     <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50 overflow-hidden">
@@ -45,7 +46,7 @@ const DraftCostList: FC<Props> = ({ costs, totalInvested, onAdd, onRemove }) => 
             Upfront Costs
           </p>
           <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">
-            Split equally across all items · postage in, entry fees
+            Split equally across all items · entry fees, inbound postage etc.
           </p>
         </div>
         {!showForm && (
@@ -91,8 +92,8 @@ const DraftCostList: FC<Props> = ({ costs, totalInvested, onAdd, onRemove }) => 
             options={COST_CATEGORIES.map((c) => ({ value: c.value, label: c.label }))}
             hint={selectedHint}
             onChange={(e) => {
-              setCategory(e.target.value as CostCategory)
-              setLabel("")
+              setCategory(e.target.value as CostCategory);
+              setLabel("");
             }}
           />
           <div className="grid grid-cols-2 gap-3">
@@ -104,7 +105,10 @@ const DraftCostList: FC<Props> = ({ costs, totalInvested, onAdd, onRemove }) => 
               placeholder="0.00"
               prefix="£"
               value={amount}
-              onChange={(e) => { setAmount(e.target.value); setCostError("") }}
+              onChange={(e) => {
+                setAmount(e.target.value);
+                setCostError("");
+              }}
               error={costError}
             />
             <Input
@@ -118,15 +122,25 @@ const DraftCostList: FC<Props> = ({ costs, totalInvested, onAdd, onRemove }) => 
             Total invested: £{totalInvested.toFixed(2)}
           </div>
           <div className="flex gap-2">
-            <Button type="button" size="sm" onClick={handleAdd}>Add</Button>
-            <Button type="button" size="sm" variant="ghost" onClick={() => { setShowForm(false); setCostError("") }}>
+            <Button type="button" size="sm" onClick={handleAdd}>
+              Add
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              variant="ghost"
+              onClick={() => {
+                setShowForm(false);
+                setCostError("");
+              }}
+            >
               Cancel
             </Button>
           </div>
         </div>
       )}
     </div>
-  )
-}
+  );
+};
 
-export default memo(DraftCostList)
+export default memo(DraftCostList);

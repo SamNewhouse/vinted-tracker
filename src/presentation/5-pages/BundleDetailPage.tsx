@@ -1,7 +1,11 @@
 "use client";
 import { FC, memo, useState } from "react";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
-import { selectActiveBundle, selectActiveBundleItems, selectBundleSummary } from "../../store/selectors";
+import {
+  selectActiveBundle,
+  selectActiveBundleItems,
+  selectBundleSummary,
+} from "../../store/selectors";
 import { deleteItem, deleteBundleExtraCost, setView } from "../../store/trackerSlice";
 import { formatCurrency, formatPercent } from "../../utils/finance";
 import type { Item, BundleExtraCost } from "../../types";
@@ -102,7 +106,10 @@ const BundleDetailPage: FC = () => {
             <Button
               size="sm"
               variant="secondary"
-              onClick={() => { setShowAddItem(true); setShowAddCost(false); }}
+              onClick={() => {
+                setShowAddItem(true);
+                setShowAddCost(false);
+              }}
             >
               + Add Item
             </Button>
@@ -146,7 +153,10 @@ const BundleDetailPage: FC = () => {
             <Button
               size="sm"
               variant="secondary"
-              onClick={() => { setShowAddCost(true); setShowAddItem(false); }}
+              onClick={() => {
+                setShowAddCost(true);
+                setShowAddItem(false);
+              }}
             >
               + Add Cost
             </Button>
@@ -163,7 +173,9 @@ const BundleDetailPage: FC = () => {
               <ExtraCostRow
                 key={cost.id}
                 cost={cost}
-                onDelete={(id) => dispatch(deleteBundleExtraCost({ bundleId: bundle.id, costId: id }))}
+                onDelete={(id) =>
+                  dispatch(deleteBundleExtraCost({ bundleId: bundle.id, costId: id }))
+                }
               />
             ))
           )}
@@ -186,9 +198,7 @@ const BundleDetailPage: FC = () => {
         </div>
       )}
 
-      {soldItem && (
-        <MarkSoldModal item={soldItem} onClose={() => setSoldItem(null)} />
-      )}
+      {soldItem && <MarkSoldModal item={soldItem} onClose={() => setSoldItem(null)} />}
     </div>
   );
 };

@@ -1,20 +1,16 @@
-import { FC, memo } from "react"
-import type { Item } from "../../types"
-import {
-  formatCurrency,
-  calcItemProfit,
-  calcTotalSaleCosts,
-} from "../../utils/finance"
-import Badge from "../1-atoms/Badge"
-import Button from "../1-atoms/Button"
-import CostCell from "../1-atoms/CostCell"
-import ProfitValue from "../1-atoms/ProfitValue"
+import { FC, memo } from "react";
+import type { Item } from "../../types";
+import { formatCurrency, calcItemProfit, calcTotalSaleCosts } from "../../utils/finance";
+import Badge from "../1-atoms/Badge";
+import Button from "../1-atoms/Button";
+import CostCell from "../1-atoms/CostCell";
+import ProfitValue from "../1-atoms/ProfitValue";
 
 interface Props {
-  item: Item
-  onMarkSold: (itemId: string) => void
-  onEdit: (itemId: string) => void
-  onDelete: (itemId: string) => void
+  item: Item;
+  onMarkSold: (itemId: string) => void;
+  onEdit: (itemId: string) => void;
+  onDelete: (itemId: string) => void;
 }
 
 const statusVariant = {
@@ -23,10 +19,10 @@ const statusVariant = {
   sold: "success",
   returned: "warning",
   unsellable: "error",
-} as const
+} as const;
 
 const ItemRow: FC<Props> = ({ item, onMarkSold, onEdit, onDelete }) => {
-  const totalSaleCosts = calcTotalSaleCosts(item.saleCosts)
+  const totalSaleCosts = calcTotalSaleCosts(item.saleCosts);
 
   const profit =
     item.salePrice != null
@@ -36,7 +32,7 @@ const ItemRow: FC<Props> = ({ item, onMarkSold, onEdit, onDelete }) => {
           item.allocatedExtraCostShare,
           item.saleCosts,
         )
-      : null
+      : null;
 
   return (
     <div className="flex flex-col sm:flex-row sm:items-center gap-3 py-3 border-b border-slate-100 dark:border-slate-800 last:border-0">
@@ -96,7 +92,7 @@ const ItemRow: FC<Props> = ({ item, onMarkSold, onEdit, onDelete }) => {
         </Button>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default memo(ItemRow)
+export default memo(ItemRow);

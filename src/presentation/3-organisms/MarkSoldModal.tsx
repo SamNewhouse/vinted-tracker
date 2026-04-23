@@ -1,48 +1,58 @@
-"use client"
-import { FC, memo, useState } from "react"
-import { useAppDispatch } from "../../store/hooks"
-import { markItemSold } from "../../store/trackerSlice"
-import { calcItemProfit, formatCurrency } from "../../utils/finance"
-import type { Item, CostCategory, ItemSaleCost } from "../../types"
-import Button from "../1-atoms/Button"
-import Input from "../1-atoms/Input"
-import CostCell from "../1-atoms/CostCell"
-import ProfitValue from "../1-atoms/ProfitValue"
-import Modal from "../1-atoms/Modal"
+"use client";
+import { FC, memo, useState } from "react";
+import { useAppDispatch } from "../../store/hooks";
+import { markItemSold } from "../../store/trackerSlice";
+import { calcItemProfit, formatCurrency } from "../../utils/finance";
+import type { Item, CostCategory, ItemSaleCost } from "../../types";
+import Button from "../1-atoms/Button";
+import Input from "../1-atoms/Input";
+import CostCell from "../1-atoms/CostCell";
+import ProfitValue from "../1-atoms/ProfitValue";
+import Modal from "../1-atoms/Modal";
 
 interface Props {
-  item: Item
-  onClose: () => void
+  item: Item;
+  onClose: () => void;
 }
 
-type DraftSaleCost = { tempId: string; category: CostCategory; label: string; amount: number }
+type DraftSaleCost = { tempId: string; category: CostCategory; label: string; amount: number };
 
 // Converts draft costs to the shape calcItemProfit expects (id not needed for calc)
 function toSaleCosts(drafts: DraftSaleCost[]): ItemSaleCost[] {
-  return drafts.map((d) => ({ id: d.tempId, category: d.category, label: d.label, amount: d.amount }))
+  return drafts.map((d) => ({
+    id: d.tempId,
+    category: d.category,
+    label: d.label,
+    amount: d.amount,
+  }));
 }
 
 const MarkSoldModal: FC<Props> = ({ item, onClose }) => {
-  const dispatch = useAppDispatch()
-  const [salePrice, setSalePrice] = useState("")
-  const [salePriceError, setSalePriceError] = useState("")
+  const dispatch = useAppDispatch();
+  const [salePrice, setSalePrice] = useState("");
+  const [salePriceError, setSalePriceError] = useState("");
   const [draftCosts, setDraftCosts] = useState<DraftSaleCost[]>([
     { tempId: "postage_out", category: "postage", label: "Postage Out", amount: 0 },
-  ])
+  ]);
 
-  const parsedPrice = Number(salePrice)
-  const activeCosts = draftCosts.filter((c) => c.amount > 0)
+  const parsedPrice = Number(salePrice);
+  const activeCosts = draftCosts.filter((c) => c.amount > 0);
 
   const previewProfit =
     !isNaN(parsedPrice) && parsedPrice > 0
-      ? calcItemProfit(parsedPrice, item.allocatedPurchaseCost, item.allocatedExtraCostShare, toSaleCosts(activeCosts))
-      : null
+      ? calcItemProfit(
+          parsedPrice,
+          item.allocatedPurchaseCost,
+          item.allocatedExtraCostShare,
+          toSaleCosts(activeCosts),
+        )
+      : null;
 
   const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
     if (!salePrice || isNaN(parsedPrice) || parsedPrice <= 0) {
-      setSalePriceError("Enter a valid sale price")
-      return
+      setSalePriceError("Enter a valid sale price");
+      return;
     }
     dispatch(
       markItemSold({
@@ -50,16 +60,20 @@ const MarkSoldModal: FC<Props> = ({ item, onClose }) => {
         salePrice: parsedPrice,
         saleCosts: activeCosts.map(({ category, label, amount }) => ({ category, label, amount })),
       }),
-    )
-    onClose()
-  }
+    );
+    onClose();
+  };
 
   return (
     <Modal title={`Mark "${item.name}" as Sold`} onClose={onClose}>
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="grid grid-cols-2 gap-3">
           <CostCell label="Break-even" value={formatCurrency(item.breakEvenPrice)} colour="muted" />
-          <CostCell label="Min. sale (15%)" value={formatCurrency(item.minSalePrice)} colour="warning" />
+          <CostCell
+            label="Min. sale (15%)"
+            value={formatCurrency(item.minSalePrice)}
+            colour="warning"
+          />
         </div>
 
         <Input
@@ -70,7 +84,10 @@ const MarkSoldModal: FC<Props> = ({ item, onClose }) => {
           placeholder="0.00"
           prefix="£"
           value={salePrice}
-          onChange={(e) => { setSalePrice(e.target.value); setSalePriceError("") }}
+          onChange={(e) => {
+            setSalePrice(e.target.value);
+            setSalePriceError("");
+          }}
           error={salePriceError}
         />
 
@@ -80,7 +97,9 @@ const MarkSoldModal: FC<Props> = ({ item, onClose }) => {
           </p>
           {draftCosts.map((cost) => (
             <div key={cost.tempId} className="flex items-center gap-3">
-              <span className="text-sm text-slate-600 dark:text-slate-300 flex-1">{cost.label}</span>
+              <span className="text-sm text-slate-600 dark:text-slate-300 flex-1">
+                {cost.label}
+              </span>
               <Input
                 type="number"
                 step="0.01"
@@ -91,9 +110,7 @@ const MarkSoldModal: FC<Props> = ({ item, onClose }) => {
                 onChange={(e) =>
                   setDraftCosts((prev) =>
                     prev.map((c) =>
-                      c.tempId === cost.tempId
-                        ? { ...c, amount: Number(e.target.value) || 0 }
-                        : c,
+                      c.tempId === cost.tempId ? { ...c, amount: Number(e.target.value) || 0 } : c,
                     ),
                   )
                 }
@@ -110,12 +127,16 @@ const MarkSoldModal: FC<Props> = ({ item, onClose }) => {
         )}
 
         <div className="flex gap-3 pt-1">
-          <Button type="submit" fullWidth>Confirm Sale</Button>
-          <Button type="button" variant="ghost" onClick={onClose}>Cancel</Button>
+          <Button type="submit" fullWidth>
+            Confirm Sale
+          </Button>
+          <Button type="button" variant="ghost" onClick={onClose}>
+            Cancel
+          </Button>
         </div>
       </form>
     </Modal>
-  )
-}
+  );
+};
 
-export default memo(MarkSoldModal)
+export default memo(MarkSoldModal);

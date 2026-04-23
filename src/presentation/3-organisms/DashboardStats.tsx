@@ -31,14 +31,10 @@ const DashboardStatsOrganism: FC = () => {
         label="Net Profit / Loss"
         value={formatCurrency(stats.totalProfit)}
         subtext={
-          stats.totalSpend > 0
-            ? `${formatPercent(stats.overallROI, true)} overall ROI`
-            : undefined
+          stats.totalSpend > 0 ? `${formatPercent(stats.overallROI, true)} overall ROI` : undefined
         }
         trend={profitDirection}
-        trendValue={
-          stats.totalSpend > 0 ? formatPercent(stats.overallROI, true) : undefined
-        }
+        trendValue={stats.totalSpend > 0 ? formatPercent(stats.overallROI, true) : undefined}
         icon={<span className="text-base">📈</span>}
         highlight
       />
