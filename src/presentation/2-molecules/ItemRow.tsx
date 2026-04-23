@@ -1,14 +1,15 @@
 import { FC, memo } from "react";
 import type { Item } from "../../types";
-import { formatCurrency, calcItemProfit, calcTotalSaleCosts } from "../../utils/finance";
+import { formatCurrency, calcItemProfit } from "../../utils/finance";
 import Badge from "../1-atoms/Badge";
 import Button from "../1-atoms/Button";
-import ValueCell from "../1-atoms/ValueCell";
 
 interface Props {
   item: Item;
-  onMarkSold: (itemId: string) => void;
-  onEdit: (itemId: string) => void;
+  gridClass: string;
+  showBundle?: boolean;
+  onMarkSold: (item: Item) => void;
+  onEdit: (item: Item) => void;
   onDelete: (itemId: string) => void;
 }
 
@@ -20,9 +21,14 @@ const statusVariant = {
   unsellable: "error",
 } as const;
 
-const ItemRow: FC<Props> = ({ item, onMarkSold, onEdit, onDelete }) => {
-  const totalSaleCosts = calcTotalSaleCosts(item.saleCosts);
-
+const ItemRow: FC<Props> = ({
+  item,
+  gridClass,
+  showBundle = false,
+  onMarkSold,
+  onEdit,
+  onDelete,
+}) => {
   const profit =
     item.salePrice != null
       ? calcItemProfit(
@@ -34,9 +40,11 @@ const ItemRow: FC<Props> = ({ item, onMarkSold, onEdit, onDelete }) => {
       : null;
 
   return (
-    <div className="flex flex-col sm:flex-row sm:items-center gap-3 py-3 border-b border-slate-100 dark:border-slate-800 last:border-0">
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2 flex-wrap">
+    <div
+      className={`grid ${gridClass} gap-4 items-center py-3 border-b border-slate-100 dark:border-slate-800 last:border-0`}
+    >
+      <div className="min-w-0">
+        <div className="flex items-center gap-2">
           <span className="font-medium text-sm text-slate-900 dark:text-white truncate">
             {item.name}
           </span>
@@ -49,29 +57,43 @@ const ItemRow: FC<Props> = ({ item, onMarkSold, onEdit, onDelete }) => {
         )}
       </div>
 
-      <div className="grid grid-cols-3 gap-6 shrink-0 w-[280px]" style={{ justifyItems: "end" }}>
-        <ValueCell
-          value={formatCurrency(item.allocatedPurchaseCost + item.allocatedExtraCostShare)}
-          colour="muted"
-        />
-        <ValueCell value={formatCurrency(item.minSalePrice)} colour="warning" />
-        <ValueCell
-          value={profit !== null ? formatCurrency(profit) : ""}
-          colour={profit === null ? "muted" : profit >= 0 ? "profit" : "loss"}
-        />
-      </div>
+      {showBundle && (
+        <span className="text-xs text-slate-400 dark:text-slate-500 truncate">
+          {item.bundleName}
+        </span>
+      )}
 
-      <div className="flex gap-1.5 shrink-0 w-[140px] justify-end">
+      <span className="text-right text-sm tabular-nums text-slate-500 dark:text-slate-400">
+        {formatCurrency(item.allocatedPurchaseCost + item.allocatedExtraCostShare)}
+      </span>
+
+      <span className="text-right text-sm tabular-nums font-semibold text-amber-600 dark:text-amber-400">
+        {formatCurrency(item.minSalePrice)}
+      </span>
+
+      <span
+        className={`text-right text-sm tabular-nums font-semibold ${
+          profit === null
+            ? "text-slate-400 dark:text-slate-500"
+            : profit >= 0
+              ? "text-emerald-600 dark:text-emerald-400"
+              : "text-red-600 dark:text-red-400"
+        }`}
+      >
+        {profit !== null ? formatCurrency(profit) : "—"}
+      </span>
+
+      <div className="flex gap-1.5 justify-end">
         <Button
           size="sm"
           variant="secondary"
-          onClick={() => onMarkSold(item.id)}
+          onClick={() => onMarkSold(item)}
           disabled={item.status === "sold"}
           className={item.status === "sold" ? "invisible" : ""}
         >
           Sold
         </Button>
-        <Button size="sm" variant="ghost" onClick={() => onEdit(item.id)}>
+        <Button size="sm" variant="ghost" onClick={() => onEdit(item)}>
           Edit
         </Button>
         <Button

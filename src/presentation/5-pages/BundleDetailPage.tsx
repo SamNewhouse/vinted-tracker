@@ -15,12 +15,12 @@ import ValueCell from "../1-atoms/ValueCell";
 import ProfitValue from "../1-atoms/ProfitValue";
 import SectionHeader from "../1-atoms/SectionHeader";
 import EmptyState from "../1-atoms/EmptyState";
-import ItemRow from "../2-molecules/ItemRow";
 import ExtraCostRow from "../2-molecules/ExtraCostRow";
 import AddItemForm from "../3-organisms/AddItemForm";
 import AddExtraCostForm from "../3-organisms/AddExtraCostForm";
 import MarkSoldModal from "../3-organisms/MarkSoldModal";
 import EditItemModal from "../3-organisms/EditItemModal";
+import ItemTable from "../2-molecules/ItemTable";
 
 const BundleDetailPage: FC = () => {
   const dispatch = useAppDispatch();
@@ -124,34 +124,12 @@ const BundleDetailPage: FC = () => {
               No items yet. Add items to start splitting costs.
             </div>
           ) : (
-            <>
-              {/* Column headers */}
-              <div className="hidden sm:flex items-center gap-3 py-2 border-b border-slate-100 dark:border-slate-800">
-                <div className="flex-1" />
-                <div className="grid grid-cols-3 w-[304px] text-right">
-                  {["Cost", "Min. sale", "Profit", ""].map((h) => (
-                    <p key={h} className="text-xs text-slate-400 dark:text-slate-500">{h}</p>
-                  ))}
-                </div>
-                <div className="w-[140px]" />
-              </div>
-
-              {items.map((item: Item) => (
-                <ItemRow
-                  key={item.id}
-                  item={item}
-                  onMarkSold={(id) => {
-                    const found = items.find((i) => i.id === id);
-                    if (found) setSoldItem(found);
-                  }}
-                  onEdit={(id) => {
-                    const found = items.find((i) => i.id === id);
-                    if (found) setEditItem(found);
-                  }}
-                  onDelete={(id) => dispatch(deleteItem(id))}
-                />
-              ))}
-            </>
+            <ItemTable
+              items={items}
+              onMarkSold={(item) => setSoldItem(item)}
+              onEdit={(item) => setEditItem(item)}
+              onDelete={(id) => dispatch(deleteItem(id))}
+            />
           )}
         </div>
 

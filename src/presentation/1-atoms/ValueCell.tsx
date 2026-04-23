@@ -17,9 +17,7 @@ const colourMap = {
 
 const ValueCell: FC<Props> = ({ label, value, colour = "default", className }) => (
   <div className={`${className}`}>
-    {label && (
-      <p className="text-xs text-slate-400 dark:text-slate-500 mb-0.5">{label}</p>
-    )}
+    {label && <p className="text-xs text-slate-400 dark:text-slate-500 mb-0.5">{label}</p>}
     <p className={`text-sm font-semibold tabular-nums ${colourMap[colour]}`}>{value}</p>
   </div>
 );

@@ -68,7 +68,11 @@ const MarkSoldModal: FC<Props> = ({ item, onClose }) => {
     <Modal title={`Mark "${item.name}" as Sold`} onClose={onClose}>
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="grid grid-cols-2 gap-3">
-          <ValueCell label="Break-even" value={formatCurrency(item.breakEvenPrice)} colour="muted" />
+          <ValueCell
+            label="Break-even"
+            value={formatCurrency(item.breakEvenPrice)}
+            colour="muted"
+          />
           <ValueCell
             label="Min. sale (15%)"
             value={formatCurrency(item.minSalePrice)}
