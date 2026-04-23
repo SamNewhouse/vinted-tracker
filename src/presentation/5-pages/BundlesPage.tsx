@@ -2,9 +2,17 @@
 import { FC, memo } from "react";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import { setView, setFilter, clearFilters } from "../../store/trackerSlice";
+import type { SortField } from "../../types";
 import Button from "../1-atoms/Button";
 import Input from "../1-atoms/Input";
+import Select from "../1-atoms/Select";
 import BundleList from "../3-organisms/BundleList";
+
+const SORT_OPTIONS = [
+  { value: "date", label: "Date" },
+  { value: "name", label: "Name" },
+  { value: "spend", label: "Spend" },
+];
 
 const BundlesPage: FC = () => {
   const dispatch = useAppDispatch();
@@ -25,21 +33,15 @@ const BundlesPage: FC = () => {
             onChange={(e) => dispatch(setFilter({ search: e.target.value }))}
           />
         </div>
-        <div className="flex gap-2">
-          <select
+        <div className="flex gap-2 items-end">
+          <Select
             value={filters.sortField}
-            onChange={(e) => dispatch(setFilter({ sortField: e.target.value as any }))}
-            className="rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm text-slate-700 dark:text-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-slate-900 dark:focus:ring-white"
-          >
-            <option value="date">Date</option>
-            <option value="name">Name</option>
-            <option value="spend">Spend</option>
-          </select>
+            options={SORT_OPTIONS}
+            onChange={(e) => dispatch(setFilter({ sortField: e.target.value as SortField }))}
+          />
           <button
             onClick={() =>
-              dispatch(
-                setFilter({ sortDirection: filters.sortDirection === "asc" ? "desc" : "asc" }),
-              )
+              dispatch(setFilter({ sortDirection: filters.sortDirection === "asc" ? "desc" : "asc" }))
             }
             className="px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 transition-colors"
           >
