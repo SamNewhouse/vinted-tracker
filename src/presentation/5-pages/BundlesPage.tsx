@@ -29,27 +29,27 @@ const BundlesPage: FC = () => {
         <div className="flex-1">
           <Input
             placeholder="Search bundles or items..."
-            value={filters.search}
+            value={filters?.search}
             onChange={(e) => dispatch(setFilter({ search: e.target.value }))}
           />
         </div>
         <div className="flex gap-2 items-end">
           <Select
-            value={filters.sortField}
+            value={filters?.sortField}
             options={SORT_OPTIONS}
             onChange={(e) => dispatch(setFilter({ sortField: e.target.value as SortField }))}
           />
           <button
             onClick={() =>
               dispatch(
-                setFilter({ sortDirection: filters.sortDirection === "asc" ? "desc" : "asc" }),
+                setFilter({ sortDirection: filters?.sortDirection === "asc" ? "desc" : "asc" }),
               )
             }
             className="px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 transition-colors"
           >
-            {filters.sortDirection === "asc" ? "↑" : "↓"}
+            {filters?.sortDirection === "asc" ? "↑" : "↓"}
           </button>
-          {(filters.search || filters.sortField !== "date") && (
+          {(filters?.search || filters?.sortField !== "date") && (
             <Button size="sm" variant="ghost" onClick={() => dispatch(clearFilters())}>
               Clear
             </Button>

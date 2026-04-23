@@ -111,8 +111,8 @@ export const selectFilteredBundles = createSelector(
   (bundles, items, filters) => {
     let result = [...bundles];
 
-    if (filters.search) {
-      const q = filters.search.toLowerCase();
+    if (filters?.search) {
+      const q = filters?.search.toLowerCase();
       result = result.filter((b) => {
         const bundleItems = items.filter((i) => i.bundleId === b.id);
         return (
@@ -124,8 +124,8 @@ export const selectFilteredBundles = createSelector(
     }
 
     result.sort((a, b) => {
-      const dir = filters.sortDirection === "asc" ? 1 : -1;
-      switch (filters.sortField) {
+      const dir = filters?.sortDirection === "asc" ? 1 : -1;
+      switch (filters?.sortField) {
         case "date":
           return (a.purchaseDate > b.purchaseDate ? 1 : -1) * dir;
         case "name":
@@ -148,13 +148,13 @@ export const selectFilteredItems = createSelector(
   (items, filters) => {
     let result = [...items];
 
-    if (filters.status !== "all") {
+     if (filters?.status && filters.status !== "all") {
       result = result.filter((i) => i.status === filters.status);
     }
-    if (filters.bundleId !== "all") {
+    if (filters?.bundleId && filters.bundleId !== "all") {
       result = result.filter((i) => i.bundleId === filters.bundleId);
     }
-    if (filters.search) {
+    if (filters?.search) {
       const q = filters.search.toLowerCase();
       result = result.filter(
         (i) =>
@@ -165,8 +165,8 @@ export const selectFilteredItems = createSelector(
     }
 
     result.sort((a, b) => {
-      const dir = filters.sortDirection === "asc" ? 1 : -1;
-      switch (filters.sortField) {
+      const dir = filters?.sortDirection === "asc" ? 1 : -1;
+      switch (filters?.sortField) {
         case "date":
           return (a.purchaseDate > b.purchaseDate ? 1 : -1) * dir;
         case "name":

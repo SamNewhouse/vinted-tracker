@@ -1,16 +1,14 @@
 "use client";
-import { FC, memo } from "react";
+import { FC, memo, useState } from "react";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import { selectFilteredItems } from "../../store/selectors";
-import { setFilter, clearFilters, setView, setActiveBundleId } from "../../store/trackerSlice";
-import { deleteItem } from "../../store/trackerSlice";
+import { setFilter, clearFilters, setView, setActiveBundleId, deleteItem } from "../../store/trackerSlice";
 import EmptyState from "../1-atoms/EmptyState";
 import Button from "../1-atoms/Button";
 import Input from "../1-atoms/Input";
 import Select from "../1-atoms/Select";
 import ItemRow from "../2-molecules/ItemRow";
-import { useState } from "react";
-import type { Item } from "../../types";
+import type { FilterState, Item } from "../../types";
 import MarkSoldModal from "../3-organisms/MarkSoldModal";
 import EditItemModal from "../3-organisms/EditItemModal";
 
@@ -22,12 +20,6 @@ const ItemsPage: FC = () => {
 
   const [soldItem, setSoldItem] = useState<Item | null>(null);
   const [editItem, setEditItem] = useState<Item | null>(null);
-
-  console.log("=== ItemsPage Debug ===");
-  console.log("filters:", JSON.stringify(filters, null, 2));
-  console.log("all items in store:", useAppSelector(s => s.tracker.items).length);
-  console.log("filtered items:", items.length);
-  console.log("raw localStorage:", localStorage.getItem("persist:vinted-tracker-root"));
 
   return (
     <div className="space-y-5 max-w-5xl">
@@ -49,13 +41,13 @@ const ItemsPage: FC = () => {
         <div className="flex-1 min-w-48">
           <Input
             placeholder="Search items, bundles, sources..."
-            value={filters.search}
+            value={filters?.search ?? ""}
             onChange={(e) => dispatch(setFilter({ search: e.target.value }))}
           />
         </div>
         <Select
-          value={filters.status}
-          onChange={(e) => dispatch(setFilter({ status: e.target.value as typeof filters.status }))}
+          value={filters?.status ?? "all"}
+          onChange={(e) => dispatch(setFilter({ status: e.target.value as FilterState["status"] }))}
           options={[
             { value: "all", label: "All statuses" },
             { value: "unlisted", label: "Unlisted" },
@@ -66,7 +58,7 @@ const ItemsPage: FC = () => {
           ]}
         />
         <Select
-          value={filters.bundleId}
+          value={filters?.bundleId ?? "all"}
           onChange={(e) => dispatch(setFilter({ bundleId: e.target.value }))}
           options={[
             { value: "all", label: "All bundles" },
@@ -74,10 +66,8 @@ const ItemsPage: FC = () => {
           ]}
         />
         <Select
-          value={filters.sortField}
-          onChange={(e) =>
-            dispatch(setFilter({ sortField: e.target.value as typeof filters.sortField }))
-          }
+          value={filters?.sortField ?? "date"}
+          onChange={(e) => dispatch(setFilter({ sortField: e.target.value as FilterState["sortField"] }))}
           options={[
             { value: "date", label: "Sort: Date" },
             { value: "name", label: "Sort: Name" },
@@ -85,7 +75,7 @@ const ItemsPage: FC = () => {
           ]}
         />
         <Select
-          value={filters.sortDirection}
+          value={filters?.sortDirection ?? "desc"}
           onChange={(e) => dispatch(setFilter({ sortDirection: e.target.value as "asc" | "desc" }))}
           options={[
             { value: "desc", label: "↓ Desc" },

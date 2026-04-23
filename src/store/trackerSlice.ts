@@ -17,7 +17,7 @@ interface TrackerState {
   items: Item[];
   activeBundleId: string | null;
   view: ViewMode;
-  filters: FilterState;
+  filters?: FilterState;
 }
 
 export const initialState: TrackerState = {
@@ -25,13 +25,6 @@ export const initialState: TrackerState = {
   items: [],
   activeBundleId: null,
   view: "dashboard",
-  filters: {
-    search: "",
-    status: "all",
-    bundleId: "all",
-    sortField: "date",
-    sortDirection: "desc",
-  },
 };
 
 const trackerSlice = createSlice({
@@ -271,11 +264,11 @@ const trackerSlice = createSlice({
     },
 
     setFilter(state, action: PayloadAction<Partial<FilterState>>) {
-      state.filters = { ...state.filters, ...action.payload };
+      state.filters = { ...state.filters, ...action.payload } as FilterState;
     },
 
     clearFilters(state) {
-      state.filters = initialState.filters;
+      state.filters = undefined;
     },
   },
   extraReducers: (builder) => {
@@ -284,10 +277,9 @@ const trackerSlice = createSlice({
         return {
           ...initialState,
           ...action.payload.tracker,
-          filters: initialState.filters,
+          filters: undefined,
         };
       }
-      // No persisted data — return clean initial state
       return initialState;
     });
   },
