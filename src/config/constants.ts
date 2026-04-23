@@ -1,4 +1,4 @@
-import type { CostCategoryOption } from "../types";
+import type { CostCategoryOption, ExtraCostCategory } from "../types";
 
 export const COST_CATEGORIES: CostCategoryOption[] = [
   { value: "postage",        label: "Postage",     hint: "Postage paid to receive/send" },
@@ -9,3 +9,13 @@ export const COST_CATEGORIES: CostCategoryOption[] = [
   { value: "cleaning",       label: "Cleaning",       hint: "Cleaning products or service" },
   { value: "other",          label: "Other",          hint: "Any other upfront cost before selling" },
 ];
+
+export const COST_CATEGORY_LABELS: Record<ExtraCostCategory, string> = {
+  postage: "Postage",
+  packaging: "Packaging",
+  car_boot_entry: "Car Boot Entry",
+  platform_fee: "Platform Fee",
+  repair: "Repair / Alteration",
+  cleaning: "Cleaning",
+  other: "Other",
+};

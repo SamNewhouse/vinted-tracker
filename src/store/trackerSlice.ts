@@ -1,227 +1,302 @@
-import { createSlice, PayloadAction } from "@reduxjs/toolkit";
-import { v4 as uuidv4 } from "uuid";
-import { Bundle, ViewMode, FilterState, BundleItem, ItemStatus, ExtraCost } from "../types";
+import { createSlice, PayloadAction } from "@reduxjs/toolkit"
+import { v4 as uuidv4 } from "uuid"
+import {
+  Bundle,
+  Item,
+  ItemStatus,
+  ItemSaleCost,
+  BundleExtraCost,
+  DraftItem,
+  ViewMode,
+  FilterState,
+} from "../types"
 
 interface TrackerState {
-  bundles: Bundle[];
-  activeBundleId: string | null;
-  view: ViewMode;
-  filters: FilterState;
+  bundles: Bundle[]
+  items: Item[]
+  activeBundleId: string | null
+  view: ViewMode
+  filters: FilterState
 }
 
 const initialState: TrackerState = {
   bundles: [],
+  items: [],
   activeBundleId: null,
   view: "dashboard",
   filters: {
     search: "",
     status: "all",
+    bundleId: "all",
     sortField: "date",
     sortDirection: "desc",
   },
-};
+}
 
 const trackerSlice = createSlice({
   name: "tracker",
   initialState,
   reducers: {
-    // --- Bundles ---
+
+    // ── Bundles ──────────────────────────────────────────────
+
     addBundle(
       state,
-      action: PayloadAction<
-        Omit<Bundle, "id" | "createdAt" | "updatedAt" | "items" | "extraCosts">
-      >,
+      action: PayloadAction<{
+        bundle: Omit<Bundle, "id" | "createdAt" | "updatedAt" | "extraCosts">
+        draftItems: DraftItem[]
+      }>,
     ) {
-      const now = new Date().toISOString();
+      const now = new Date().toISOString()
+      const bundleId = uuidv4()
+      const { bundle, draftItems } = action.payload
+
+      const itemCount = draftItems.length
+      const perItemPurchaseCost = itemCount > 0 ? bundle.purchaseCost / itemCount : 0
+
+      // Create the bundle
       state.bundles.push({
-        ...action.payload,
-        id: uuidv4(),
-        items: [],
+        ...bundle,
+        id: bundleId,
         extraCosts: [],
         createdAt: now,
         updatedAt: now,
-      });
+      })
+
+      // Create each item — denormalise bundle context at write time
+      for (const draft of draftItems) {
+        state.items.push({
+          id: uuidv4(),
+          bundleId,
+          bundleName: bundle.name,
+          bundleSource: bundle.source,
+          purchaseDate: bundle.purchaseDate,
+          name: draft.name,
+          description: draft.description,
+          notes: draft.notes,
+          allocatedPurchaseCost: perItemPurchaseCost,
+          allocatedExtraCostShare: 0,
+          targetMarginPercent: 15,
+          saleCosts: [],
+          breakEvenPrice: perItemPurchaseCost,
+          minSalePrice: perItemPurchaseCost * 1.15,
+          status: "unlisted",
+          createdAt: now,
+          updatedAt: now,
+        })
+      }
     },
 
     updateBundle(
       state,
       action: PayloadAction<{
-        id: string;
-        changes: Partial<Omit<Bundle, "id" | "createdAt" | "items" | "extraCosts">>;
+        id: string
+        changes: Partial<Omit<Bundle, "id" | "createdAt" | "extraCosts">>
       }>,
     ) {
-      const bundle = state.bundles.find((b) => b.id === action.payload.id);
-      if (bundle) {
-        Object.assign(bundle, action.payload.changes, {
-          updatedAt: new Date().toISOString(),
-        });
+      const bundle = state.bundles.find((b) => b.id === action.payload.id)
+      if (!bundle) return
+      Object.assign(bundle, action.payload.changes, { updatedAt: new Date().toISOString() })
+
+      // Sync denormalised fields onto items if name/source/date changed
+      const { name, source, purchaseDate } = action.payload.changes
+      if (name !== undefined || source !== undefined || purchaseDate !== undefined) {
+        for (const item of state.items.filter((i) => i.bundleId === bundle.id)) {
+          if (name !== undefined) item.bundleName = name
+          if (source !== undefined) item.bundleSource = source
+          if (purchaseDate !== undefined) item.purchaseDate = purchaseDate
+          item.updatedAt = new Date().toISOString()
+        }
       }
     },
 
     deleteBundle(state, action: PayloadAction<string>) {
-      state.bundles = state.bundles.filter((b) => b.id !== action.payload);
+      state.bundles = state.bundles.filter((b) => b.id !== action.payload)
+      state.items = state.items.filter((i) => i.bundleId !== action.payload)
       if (state.activeBundleId === action.payload) {
-        state.activeBundleId = null;
-        state.view = "bundles";
+        state.activeBundleId = null
+        state.view = "bundles"
       }
     },
 
-    // --- Items ---
+    // ── Items ────────────────────────────────────────────────
+
     addItem(
       state,
       action: PayloadAction<{
-        bundleId: string;
-        item: Omit<BundleItem, "id" | "allocatedCost" | "extraCostsShare">;
+        bundleId: string
+        name: string
+        description?: string
+        notes?: string
       }>,
     ) {
-      const bundle = state.bundles.find((b) => b.id === action.payload.bundleId);
-      if (!bundle) return;
+      const bundle = state.bundles.find((b) => b.id === action.payload.bundleId)
+      if (!bundle) return
 
-      const newItem: BundleItem = {
-        ...action.payload.item,
+      const now = new Date().toISOString()
+      const bundleItems = state.items.filter((i) => i.bundleId === bundle.id)
+      const newCount = bundleItems.length + 1
+
+      // Recalculate allocations across existing items first
+      const perItemPurchaseCost = bundle.purchaseCost / newCount
+      const sharedExtraCosts = bundle.extraCosts.reduce((s, c) => s + c.amount, 0)
+      const perItemExtraShare = sharedExtraCosts / newCount
+
+      for (const item of bundleItems) {
+        item.allocatedPurchaseCost = perItemPurchaseCost
+        item.allocatedExtraCostShare = perItemExtraShare
+        item.breakEvenPrice = perItemPurchaseCost + perItemExtraShare
+        item.minSalePrice = item.breakEvenPrice * (1 + item.targetMarginPercent / 100)
+        item.updatedAt = now
+      }
+
+      // Add the new item
+      state.items.push({
         id: uuidv4(),
-        allocatedCost: 0,
-        extraCostsShare: 0,
-      };
-      bundle.items.push(newItem);
-      bundle.updatedAt = new Date().toISOString();
-      recalculateAllocations(bundle);
+        bundleId: bundle.id,
+        bundleName: bundle.name,
+        bundleSource: bundle.source,
+        purchaseDate: bundle.purchaseDate,
+        name: action.payload.name,
+        description: action.payload.description,
+        notes: action.payload.notes,
+        allocatedPurchaseCost: perItemPurchaseCost,
+        allocatedExtraCostShare: perItemExtraShare,
+        targetMarginPercent: 15,
+        saleCosts: [],
+        breakEvenPrice: perItemPurchaseCost + perItemExtraShare,
+        minSalePrice: (perItemPurchaseCost + perItemExtraShare) * 1.15,
+        status: "unlisted",
+        createdAt: now,
+        updatedAt: now,
+      })
+
+      bundle.updatedAt = now
     },
 
     updateItem(
       state,
       action: PayloadAction<{
-        bundleId: string;
-        itemId: string;
-        changes: Partial<BundleItem>;
+        itemId: string
+        changes: Partial<Pick<Item, "name" | "description" | "notes" | "targetMarginPercent" | "listedPrice" | "listedAt">>
       }>,
     ) {
-      const bundle = state.bundles.find((b) => b.id === action.payload.bundleId);
-      if (!bundle) return;
-      const item = bundle.items.find((i) => i.id === action.payload.itemId);
-      if (item) {
-        Object.assign(item, action.payload.changes);
-        bundle.updatedAt = new Date().toISOString();
-        recalculateAllocations(bundle);
+      const item = state.items.find((i) => i.id === action.payload.itemId)
+      if (!item) return
+      Object.assign(item, action.payload.changes, { updatedAt: new Date().toISOString() })
+      // Recalculate minSalePrice if margin changed
+      if (action.payload.changes.targetMarginPercent !== undefined) {
+        item.minSalePrice = item.breakEvenPrice * (1 + item.targetMarginPercent / 100)
       }
     },
 
-    deleteItem(state, action: PayloadAction<{ bundleId: string; itemId: string }>) {
-      const bundle = state.bundles.find((b) => b.id === action.payload.bundleId);
-      if (!bundle) return;
-      bundle.items = bundle.items.filter((i) => i.id !== action.payload.itemId);
-      bundle.updatedAt = new Date().toISOString();
-      recalculateAllocations(bundle);
+    deleteItem(state, action: PayloadAction<string>) {
+      const item = state.items.find((i) => i.id === action.payload)
+      if (!item) return
+      const bundle = state.bundles.find((b) => b.id === item.bundleId)
+      state.items = state.items.filter((i) => i.id !== action.payload)
+      if (bundle) {
+        bundle.updatedAt = new Date().toISOString()
+        recalculateAllocations(bundle, state.items)
+      }
+    },
+
+    markItemSold(
+      state,
+      action: PayloadAction<{
+        itemId: string
+        salePrice: number
+        saleCosts: Omit<ItemSaleCost, "id">[]
+      }>,
+    ) {
+      const item = state.items.find((i) => i.id === action.payload.itemId)
+      if (!item) return
+      const now = new Date().toISOString()
+      item.status = "sold"
+      item.salePrice = action.payload.salePrice
+      item.soldAt = now
+      item.saleCosts = action.payload.saleCosts.map((c) => ({ ...c, id: uuidv4() }))
+      item.updatedAt = now
     },
 
     markItemStatus(
       state,
-      action: PayloadAction<{
-        bundleId: string;
-        itemId: string;
-        status: ItemStatus;
-        salePrice?: number;
-      }>,
+      action: PayloadAction<{ itemId: string; status: ItemStatus }>,
     ) {
-      const bundle = state.bundles.find((b) => b.id === action.payload.bundleId);
-      if (!bundle) return;
-      const item = bundle.items.find((i) => i.id === action.payload.itemId);
-      if (!item) return;
-
-      item.status = action.payload.status;
-
-      if (action.payload.status === "sold") {
-        item.salePrice = action.payload.salePrice;
-        item.soldAt = new Date().toISOString();
-      } else {
-        // Revert — clear sale data and remove any sale-timed costs tied to this item
-        item.salePrice = undefined;
-        item.soldAt = undefined;
-        bundle.extraCosts = bundle.extraCosts.filter(
-          (c) => !(c.timing === "sale" && c.itemId === item.id),
-        );
+      const item = state.items.find((i) => i.id === action.payload.itemId)
+      if (!item) return
+      item.status = action.payload.status
+      if (action.payload.status !== "sold") {
+        // Revert — clear sale data
+        item.salePrice = undefined
+        item.soldAt = undefined
+        item.saleCosts = []
       }
-
-      bundle.updatedAt = new Date().toISOString();
-      recalculateAllocations(bundle);
+      item.updatedAt = new Date().toISOString()
     },
 
-    // --- Extra Costs (purchase AND sale) ---
-    addExtraCost(state, action: PayloadAction<{ bundleId: string; cost: Omit<ExtraCost, "id"> }>) {
-      const bundle = state.bundles.find((b) => b.id === action.payload.bundleId);
-      if (!bundle) return;
-      bundle.extraCosts.push({ ...action.payload.cost, id: uuidv4() });
-      bundle.updatedAt = new Date().toISOString();
-      recalculateAllocations(bundle);
-    },
+    // ── Bundle Extra Costs ───────────────────────────────────
 
-    updateExtraCost(
+    addBundleExtraCost(
       state,
-      action: PayloadAction<{
-        bundleId: string;
-        costId: string;
-        changes: Partial<ExtraCost>;
-      }>,
+      action: PayloadAction<{ bundleId: string; cost: Omit<BundleExtraCost, "id"> }>,
     ) {
-      const bundle = state.bundles.find((b) => b.id === action.payload.bundleId);
-      if (!bundle) return;
-      const cost = bundle.extraCosts.find((c) => c.id === action.payload.costId);
-      if (cost) {
-        Object.assign(cost, action.payload.changes);
-        bundle.updatedAt = new Date().toISOString();
-        recalculateAllocations(bundle);
-      }
+      const bundle = state.bundles.find((b) => b.id === action.payload.bundleId)
+      if (!bundle) return
+      bundle.extraCosts.push({ ...action.payload.cost, id: uuidv4() })
+      bundle.updatedAt = new Date().toISOString()
+      recalculateAllocations(bundle, state.items)
     },
 
-    deleteExtraCost(state, action: PayloadAction<{ bundleId: string; costId: string }>) {
-      const bundle = state.bundles.find((b) => b.id === action.payload.bundleId);
-      if (!bundle) return;
-      bundle.extraCosts = bundle.extraCosts.filter((c) => c.id !== action.payload.costId);
-      bundle.updatedAt = new Date().toISOString();
-      recalculateAllocations(bundle);
+    deleteBundleExtraCost(
+      state,
+      action: PayloadAction<{ bundleId: string; costId: string }>,
+    ) {
+      const bundle = state.bundles.find((b) => b.id === action.payload.bundleId)
+      if (!bundle) return
+      bundle.extraCosts = bundle.extraCosts.filter((c) => c.id !== action.payload.costId)
+      bundle.updatedAt = new Date().toISOString()
+      recalculateAllocations(bundle, state.items)
     },
 
-    // --- UI State ---
+    // ── UI State ─────────────────────────────────────────────
+
     setView(state, action: PayloadAction<ViewMode>) {
-      state.view = action.payload;
+      state.view = action.payload
     },
 
     setActiveBundleId(state, action: PayloadAction<string | null>) {
-      state.activeBundleId = action.payload;
+      state.activeBundleId = action.payload
     },
 
     setFilter(state, action: PayloadAction<Partial<FilterState>>) {
-      state.filters = { ...state.filters, ...action.payload };
+      state.filters = { ...state.filters, ...action.payload }
     },
 
     clearFilters(state) {
-      state.filters = initialState.filters;
+      state.filters = initialState.filters
     },
   },
-});
+})
 
-// --- Pure helper: mutates bundle items in-place (called inside Immer) ---
-function recalculateAllocations(bundle: Bundle): void {
-  const itemCount = bundle.items.length;
-  if (itemCount === 0) return;
+// ── Pure helper — mutates items in-place inside Immer ────────
 
-  const perItemPurchaseCost = bundle.purchaseCost / itemCount;
+function recalculateAllocations(bundle: Bundle, allItems: Item[]): void {
+  const bundleItems = allItems.filter((i) => i.bundleId === bundle.id)
+  const itemCount = bundleItems.length
+  if (itemCount === 0) return
 
-  // Only purchase-timed costs that aren't pinned to a specific item get split
-  const sharedPurchaseCosts = bundle.extraCosts
-    .filter((c) => c.timing === "purchase" && !c.itemId)
-    .reduce((sum, c) => sum + c.amount, 0);
+  const now = new Date().toISOString()
+  const perItemPurchaseCost = bundle.purchaseCost / itemCount
+  const sharedExtraCosts = bundle.extraCosts.reduce((s, c) => s + c.amount, 0)
+  const perItemExtraShare = sharedExtraCosts / itemCount
 
-  const perItemExtraCost = sharedPurchaseCosts / itemCount;
-
-  for (const item of bundle.items) {
-    // Item-specific purchase costs added directly on top of the split
-    const itemSpecificCosts = bundle.extraCosts
-      .filter((c) => c.timing === "purchase" && c.itemId === item.id)
-      .reduce((sum, c) => sum + c.amount, 0);
-
-    item.allocatedCost = perItemPurchaseCost;
-    item.extraCostsShare = perItemExtraCost + itemSpecificCosts;
+  for (const item of bundleItems) {
+    item.allocatedPurchaseCost = perItemPurchaseCost
+    item.allocatedExtraCostShare = perItemExtraShare
+    item.breakEvenPrice = perItemPurchaseCost + perItemExtraShare
+    item.minSalePrice = item.breakEvenPrice * (1 + item.targetMarginPercent / 100)
+    item.updatedAt = now
   }
 }
 
@@ -232,14 +307,14 @@ export const {
   addItem,
   updateItem,
   deleteItem,
+  markItemSold,
   markItemStatus,
-  addExtraCost,
-  updateExtraCost,
-  deleteExtraCost,
+  addBundleExtraCost,
+  deleteBundleExtraCost,
   setView,
   setActiveBundleId,
   setFilter,
   clearFilters,
-} = trackerSlice.actions;
+} = trackerSlice.actions
 
-export default trackerSlice.reducer;
+export default trackerSlice.reducer
