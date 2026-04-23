@@ -12,7 +12,8 @@ export type BundleStatus = "success" | "warning" | "error" | "neutral" | "info" 
 export type CostCategory =
   | "car_boot_entry"
   | "postage"
-  | "fuel"
+  | "travel"
+  | "cleaning"
   | "parking"
   | "packaging"
   | "other_purchase";
