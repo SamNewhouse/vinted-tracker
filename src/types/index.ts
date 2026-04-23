@@ -6,24 +6,23 @@ export type Data = {
 export type ItemStatus = "unlisted" | "listed" | "sold" | "returned" | "unsellable";
 
 /** Visual status variants for the Badge atom */
-export type BundleStatus =
-  | "success"
-  | "warning"
-  | "error"
-  | "neutral"
-  | "info"
-  | "profit"
-  | "loss";
+export type BundleStatus = "success" | "warning" | "error" | "neutral" | "info" | "profit" | "loss";
 
 /**
  * Temporary cost object used in the Add Bundle form before the bundle
  * has been created and assigned an ID. Converted to ExtraCost on submit.
  */
 export interface DraftCost {
-  tempId: string;       // local only — used as React key and for removal
+  tempId: string; // local only — used as React key and for removal
   label: string;
   category: ExtraCostCategory;
   amount: number;
+}
+
+export interface CostCategoryOption {
+  value: ExtraCostCategory;
+  label: string;
+  hint: string;
 }
 
 export type ExtraCostCategory =

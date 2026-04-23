@@ -1,18 +1,9 @@
 import { FC, memo, useState } from "react";
-import type { DraftCost, CostCategoryOption, AdditionalCostCategory } from "../../types";
+import type { DraftCost, ExtraCostCategory } from "../../types";
 import Button from "../1-atoms/Button";
 import Input from "../1-atoms/Input";
 import Select from "../1-atoms/Select";
-
-const COST_CATEGORIES: CostCategoryOption[] = [
-  { value: "postage",        label: "Postage in",      hint: "Postage paid to receive the bundle" },
-  { value: "car_boot_entry", label: "Car boot entry",  hint: "Entry fee for the car boot / market" },
-  { value: "packaging",      label: "Packaging",       hint: "Bags, boxes, bubble wrap etc." },
-  { value: "platform_fee",   label: "Platform fee",    hint: "Buying platform fee" },
-  { value: "repair",         label: "Repair",          hint: "Cost to repair or restore an item" },
-  { value: "cleaning",       label: "Cleaning",        hint: "Cleaning products or service" },
-  { value: "other",          label: "Other",           hint: "Any other upfront cost before selling" },
-];
+import { COST_CATEGORIES } from "../../config/constants";
 
 interface Props {
   costs: DraftCost[];
@@ -24,20 +15,21 @@ interface Props {
 const DraftCostList: FC<Props> = ({ costs, totalInvested, onAdd, onRemove }) => {
   const [showForm, setShowForm] = useState(false);
   const [label, setLabel] = useState("");
-  const [category, setCategory] = useState<AdditionalCostCategory>("car_boot_entry");
+  const [category, setCategory] = useState<ExtraCostCategory>("car_boot_entry");
   const [amount, setAmount] = useState("");
   const [costError, setCostError] = useState("");
 
   const selectedHint = COST_CATEGORIES.find((c) => c.value === category)?.hint;
 
   const handleAdd = () => {
-    if (!amount || isNaN(Number(amount)) || Number(amount) <= 0) {
+    const parsed = Number(amount);
+    if (!amount || isNaN(parsed) || parsed <= 0) {
       setCostError("Enter a valid amount");
       return;
     }
     const autoLabel =
       label.trim() || COST_CATEGORIES.find((c) => c.value === category)?.label || "Extra cost";
-    onAdd({ tempId: `${Date.now()}`, label: autoLabel, category, amount });
+    onAdd({ tempId: `${Date.now()}`, label: autoLabel, category, amount: parsed });
     setLabel("");
     setCategory("car_boot_entry");
     setAmount("");
@@ -75,7 +67,7 @@ const DraftCostList: FC<Props> = ({ costs, totalInvested, onAdd, onRemove }) => 
               </div>
               <div className="flex items-center gap-3">
                 <span className="tabular-nums font-semibold text-slate-900 dark:text-white">
-                  £{Number(c.amount).toFixed(2)}
+                  £{c.amount.toFixed(2)}
                 </span>
                 <button
                   type="button"
@@ -100,7 +92,7 @@ const DraftCostList: FC<Props> = ({ costs, totalInvested, onAdd, onRemove }) => 
               options={COST_CATEGORIES.map((c) => ({ value: c.value, label: c.label }))}
               hint={selectedHint}
               onChange={(e) => {
-                setCategory(e.target.value as AdditionalCostCategory);
+                setCategory(e.target.value as ExtraCostCategory);
                 setLabel("");
                 setCostError("");
               }}

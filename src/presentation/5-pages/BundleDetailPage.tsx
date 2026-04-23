@@ -128,9 +128,7 @@ const BundleDetailPage: FC = () => {
                   if (found) setSoldItem(found);
                 }}
                 onEdit={() => {}}
-                onDelete={(id: string) =>
-                  dispatch(deleteItem({ bundleId: bundle.id, itemId: id }))
-                }
+                onDelete={(id: string) => dispatch(deleteItem({ bundleId: bundle.id, itemId: id }))}
               />
             ))
           )}

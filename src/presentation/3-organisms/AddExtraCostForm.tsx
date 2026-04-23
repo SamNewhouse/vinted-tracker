@@ -6,26 +6,12 @@ import type { ExtraCostCategory } from "../../types";
 import Input from "../1-atoms/Input";
 import Button from "../1-atoms/Button";
 import Select from "../1-atoms/Select";
+import { COST_CATEGORIES } from "../../config/constants";
 
 interface Props {
   bundleId: string;
   onClose: () => void;
 }
-
-interface CostCategoryOption {
-  value: ExtraCostCategory;
-  label: string;
-  hint: string;
-}
-
-const COST_CATEGORIES: CostCategoryOption[] = [
-  { value: "postage",        label: "Postage in",      hint: "Postage paid to receive the bundle" },
-  { value: "car_boot_entry", label: "Car boot entry",  hint: "Entry fee for the car boot / market" },
-  { value: "packaging",      label: "Packaging",       hint: "Bags, boxes, bubble wrap bought upfront" },
-  { value: "repair",         label: "Repair",          hint: "Repairs or alterations before selling" },
-  { value: "cleaning",       label: "Cleaning",        hint: "Dry cleaning, washing, specialist cleaning" },
-  { value: "other",          label: "Other",           hint: "Any other upfront cost before selling" },
-];
 
 const AddExtraCostForm: FC<Props> = ({ bundleId, onClose }) => {
   const dispatch = useAppDispatch();

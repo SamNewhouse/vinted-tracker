@@ -33,9 +33,7 @@ const ItemRow: FC<Props> = ({ item, bundleExtraCosts, onMarkSold, onEdit, onDele
   const breakEven = calcBreakEvenPrice(item.allocatedCost, item.extraCostsShare);
 
   // Sale costs pinned to this item — timing: "sale" + itemId match
-  const saleCosts = bundleExtraCosts.filter(
-    (c) => c.timing === "sale" && c.itemId === item.id,
-  );
+  const saleCosts = bundleExtraCosts.filter((c) => c.timing === "sale" && c.itemId === item.id);
   const totalSaleCosts = calcTotalAdditionalCosts(saleCosts);
 
   const profit =

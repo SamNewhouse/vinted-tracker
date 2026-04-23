@@ -10,6 +10,7 @@ import {
   formatCurrency,
 } from "../../utils/finance";
 import type { BundleItem, ExtraCost, ExtraCostCategory } from "../../types";
+import { COST_CATEGORIES } from "../../config/constants";
 import Button from "../1-atoms/Button";
 import Input from "../1-atoms/Input";
 import CostCell from "../1-atoms/CostCell";
@@ -22,34 +23,28 @@ interface Props {
   onClose: () => void;
 }
 
-const DEFAULT_COST_ROWS: Array<{ key: ExtraCostCategory; label: string; hint: string }> = [
-  { key: "postage", label: "Postage out", hint: "Shipping label cost" },
-  { key: "packaging", label: "Packaging", hint: "Box, bag, bubble wrap" },
-  { key: "platform_fee", label: "Platform fee", hint: "Vinted, eBay, Depop fee" },
-  { key: "other", label: "Other", hint: "Any other sale cost" },
-];
+interface MarkSoldModalProps extends Props {
+  bundleExtraCosts: ExtraCost[];
+}
+
+const SALE_COST_KEYS: ExtraCostCategory[] = ["postage", "packaging", "platform_fee", "other"];
+const SALE_COST_ROWS = COST_CATEGORIES.filter((c) => SALE_COST_KEYS.includes(c.value));
 
 function buildInitialCosts(existingCosts: ExtraCost[], itemId: string): Record<string, string> {
   const map: Record<string, string> = {};
-  for (const row of DEFAULT_COST_ROWS) {
+  for (const row of SALE_COST_ROWS) {
     const found = existingCosts.find(
-      (c) => c.timing === "sale" && c.category === row.key && c.itemId === itemId,
+      (c) => c.timing === "sale" && c.category === row.value && c.itemId === itemId,
     );
-    map[row.key] = found ? found.amount.toFixed(2) : "";
+    map[row.value] = found ? found.amount.toFixed(2) : "";
   }
   return map;
 }
 
-// Builds a preview list for the profit calculation — not dispatched directly
 function costMapToPreview(map: Record<string, string>): Array<{ amount: number }> {
-  return DEFAULT_COST_ROWS.map((row) => ({ amount: Number(map[row.key]) || 0 })).filter(
+  return SALE_COST_ROWS.map((row) => ({ amount: Number(map[row.value]) || 0 })).filter(
     (c) => c.amount > 0,
   );
-}
-
-interface MarkSoldModalProps extends Props {
-  /** All extra costs already on the bundle — needed to pre-fill existing sale costs */
-  bundleExtraCosts: ExtraCost[];
 }
 
 const MarkSoldModal: FC<MarkSoldModalProps> = ({ bundleId, item, bundleExtraCosts, onClose }) => {
@@ -80,7 +75,6 @@ const MarkSoldModal: FC<MarkSoldModalProps> = ({ bundleId, item, bundleExtraCost
       return;
     }
 
-    // 1. Mark the item as sold with just the sale price
     dispatch(
       markItemStatus({
         bundleId,
@@ -90,19 +84,18 @@ const MarkSoldModal: FC<MarkSoldModalProps> = ({ bundleId, item, bundleExtraCost
       }),
     );
 
-    // 2. Dispatch each non-zero sale cost as a proper ExtraCost on the bundle
-    for (const row of DEFAULT_COST_ROWS) {
-      const amount = Number(costMap[row.key]) || 0;
+    for (const row of SALE_COST_ROWS) {
+      const amount = Number(costMap[row.value]) || 0;
       if (amount > 0) {
         dispatch(
           addExtraCost({
             bundleId,
             cost: {
               label: row.label,
-              category: row.key,
+              category: row.value,
               timing: "sale",
               amount,
-              itemId: item.id, // pinned to this item, not split
+              itemId: item.id,
             },
           }),
         );
@@ -114,7 +107,6 @@ const MarkSoldModal: FC<MarkSoldModalProps> = ({ bundleId, item, bundleExtraCost
 
   return (
     <Modal title="Mark as Sold" subtitle={item.name} onClose={onClose}>
-      {/* Item cost reference strip */}
       <div className="px-6 py-3 bg-slate-50 dark:bg-slate-800/50 border-b border-slate-100 dark:border-slate-800">
         <div className="grid grid-cols-3 gap-3 text-center">
           <CostCell
@@ -153,17 +145,17 @@ const MarkSoldModal: FC<MarkSoldModalProps> = ({ bundleId, item, bundleExtraCost
               </span>
             </p>
             <div className="grid grid-cols-2 gap-3">
-              {DEFAULT_COST_ROWS.map((row) => (
+              {SALE_COST_ROWS.map((row) => (
                 <Input
-                  key={row.key}
+                  key={row.value}
                   label={row.label}
                   type="number"
                   step="0.01"
                   min="0"
                   placeholder="0.00"
                   prefix="£"
-                  value={costMap[row.key]}
-                  onChange={(e) => setCost(row.key, e.target.value)}
+                  value={costMap[row.value]}
+                  onChange={(e) => setCost(row.value, e.target.value)}
                   hint={row.hint}
                 />
               ))}
