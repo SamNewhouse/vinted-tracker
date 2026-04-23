@@ -23,23 +23,31 @@ const statusVariant = {
 const ItemRow: FC<Props> = ({ item, showBundle = false, onMarkSold, onEdit, onDelete }) => {
   const profit =
     item.salePrice != null
-      ? calcItemProfit(item.salePrice, item.allocatedPurchaseCost, item.allocatedExtraCostShare, item.saleCosts)
+      ? calcItemProfit(
+          item.salePrice,
+          item.allocatedPurchaseCost,
+          item.allocatedExtraCostShare,
+          item.saleCosts,
+        )
       : null;
 
   return (
     <div className="flex items-center gap-4 py-3 border-b border-slate-100 dark:border-slate-800 last:border-0">
-
       {/* Col 1 — Name */}
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
-          <span className="font-medium text-sm text-slate-900 dark:text-white truncate">{item.name}</span>
+          <span className="font-medium text-sm text-slate-900 dark:text-white truncate">
+            {item.name}
+          </span>
           <Badge label={item.status} status={statusVariant[item.status]} />
         </div>
         {showBundle && (
           <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">{item.bundleName}</p>
         )}
         {item.description && (
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 truncate">{item.description}</p>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 truncate">
+            {item.description}
+          </p>
         )}
       </div>
 
@@ -51,7 +59,9 @@ const ItemRow: FC<Props> = ({ item, showBundle = false, onMarkSold, onEdit, onDe
         <span className="text-sm tabular-nums font-semibold text-amber-600 dark:text-amber-400 w-20 text-right">
           {formatCurrency(item.minSalePrice)}
         </span>
-        <span className={`text-sm tabular-nums font-semibold text-emerald-600 dark:text-emerald-400 w-20 text-right ...`}>
+        <span
+          className={`text-sm tabular-nums font-semibold text-emerald-600 dark:text-emerald-400 w-20 text-right ...`}
+        >
           {profit !== null ? formatCurrency(profit) : ""}
         </span>
       </div>
@@ -67,10 +77,18 @@ const ItemRow: FC<Props> = ({ item, showBundle = false, onMarkSold, onEdit, onDe
         >
           Sold
         </Button>
-        <Button size="sm" variant="ghost" onClick={() => onEdit(item)}>Edit</Button>
-        <Button size="sm" variant="ghost" className="text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20" onClick={() => onDelete(item.id)}>✕</Button>
+        <Button size="sm" variant="ghost" onClick={() => onEdit(item)}>
+          Edit
+        </Button>
+        <Button
+          size="sm"
+          variant="ghost"
+          className="text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20"
+          onClick={() => onDelete(item.id)}
+        >
+          ✕
+        </Button>
       </div>
-
     </div>
   );
 };

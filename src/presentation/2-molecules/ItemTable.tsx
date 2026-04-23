@@ -16,14 +16,16 @@ const ItemsTable: FC<Props> = ({ items, onMarkSold, onEdit, onDelete, showBundle
   return (
     <div>
       <div className="flex items-center gap-4 py-2 border-b border-slate-100 dark:border-slate-800">
-        <div className="flex-1" >
+        <div className="flex-1">
           <span className="text-xs text-slate-400 dark:text-slate-500 w-20 text-right">
             Item{showBundle && " & Bundle"} Name
           </span>
         </div>
         <div className="flex gap-4 shrink-0">
           {HEADERS.map((h) => (
-            <span key={h} className="text-xs text-slate-400 dark:text-slate-500 w-20 text-right">{h}</span>
+            <span key={h} className="text-xs text-slate-400 dark:text-slate-500 w-20 text-right">
+              {h}
+            </span>
           ))}
         </div>
         <div className="flex gap-1.5 flex-none">

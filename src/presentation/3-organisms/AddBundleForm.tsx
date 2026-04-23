@@ -50,7 +50,6 @@ const AddBundleForm: FC = () => {
           purchaseDate,
           notes: notes.trim() || undefined,
           extraCosts: draftCosts.map(({ amount, label, category }) => ({
-            id: crypto.randomUUID(),
             amount,
             label,
             category,

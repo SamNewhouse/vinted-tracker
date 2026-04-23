@@ -42,9 +42,9 @@ const trackerSlice = createSlice({
     addBundle(
       state,
       action: PayloadAction<{
-        bundle: Omit<Bundle, "id" | "createdAt" | "updatedAt"> & {
+        bundle: Omit<Bundle, "id" | "createdAt" | "updatedAt" | "extraCosts"> & {
           extraCosts: Omit<BundleExtraCost, "id">[];
-        }
+        };
         draftItems: DraftItem[];
       }>,
     ) {
