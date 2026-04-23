@@ -3,8 +3,7 @@ import type { Item } from "../../types";
 import { formatCurrency, calcItemProfit, calcTotalSaleCosts } from "../../utils/finance";
 import Badge from "../1-atoms/Badge";
 import Button from "../1-atoms/Button";
-import CostCell from "../1-atoms/CostCell";
-import ProfitValue from "../1-atoms/ProfitValue";
+import ValueCell from "../1-atoms/ValueCell";
 
 interface Props {
   item: Item;
@@ -50,35 +49,29 @@ const ItemRow: FC<Props> = ({ item, onMarkSold, onEdit, onDelete }) => {
         )}
       </div>
 
-      <div className="grid grid-cols-3 sm:grid-cols-4 gap-4 text-right shrink-0">
-        <CostCell
-          label="Cost"
+      <div className="grid grid-cols-4 gap-4 text-right shrink-0 w-[340px]">
+        <ValueCell
           value={formatCurrency(item.allocatedPurchaseCost + item.allocatedExtraCostShare)}
           colour="muted"
         />
-        <CostCell label="Break-even" value={formatCurrency(item.breakEvenPrice)} colour="muted" />
-        <CostCell label="Min. sale" value={formatCurrency(item.minSalePrice)} colour="warning" />
-        {item.status === "sold" && profit !== null && (
-          <div>
-            <p className="text-xs text-slate-400 mb-0.5">
-              Profit
-              {totalSaleCosts > 0 && (
-                <span className="text-slate-300 dark:text-slate-600 ml-1">
-                  (after {formatCurrency(totalSaleCosts)} costs)
-                </span>
-              )}
-            </p>
-            <ProfitValue value={profit} />
-          </div>
-        )}
+        <ValueCell value={formatCurrency(item.breakEvenPrice)} colour="muted" />
+        <ValueCell value={formatCurrency(item.minSalePrice)} colour="warning" />
+        <ValueCell
+          value={profit !== null ? formatCurrency(profit) : ""}
+          colour={profit === null ? "muted" : profit >= 0 ? "profit" : "loss"}
+        />
       </div>
 
       <div className="flex gap-1.5 shrink-0">
-        {item.status !== "sold" && (
-          <Button size="sm" variant="secondary" onClick={() => onMarkSold(item.id)}>
-            Sold
-          </Button>
-        )}
+        <Button
+          size="sm"
+          variant="secondary"
+          onClick={() => onMarkSold(item.id)}
+          disabled={item.status === "sold"}
+          className={item.status === "sold" ? "invisible" : ""}
+        >
+          Sold
+        </Button>
         <Button size="sm" variant="ghost" onClick={() => onEdit(item.id)}>
           Edit
         </Button>

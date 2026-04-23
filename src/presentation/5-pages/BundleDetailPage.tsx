@@ -11,7 +11,7 @@ import { formatCurrency, formatPercent } from "../../utils/finance";
 import type { Item, BundleExtraCost } from "../../types";
 import Button from "../1-atoms/Button";
 import Badge from "../1-atoms/Badge";
-import CostCell from "../1-atoms/CostCell";
+import ValueCell from "../1-atoms/ValueCell";
 import ProfitValue from "../1-atoms/ProfitValue";
 import SectionHeader from "../1-atoms/SectionHeader";
 import EmptyState from "../1-atoms/EmptyState";
@@ -76,13 +76,13 @@ const BundleDetailPage: FC = () => {
       {/* Summary strip */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4">
-          <CostCell label="Purchase Cost" value={formatCurrency(bundle.purchaseCost)} />
+          <ValueCell label="Purchase Cost" value={formatCurrency(bundle.purchaseCost)} />
         </div>
         <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4">
-          <CostCell label="Extra Costs" value={formatCurrency(totalExtraCosts)} />
+          <ValueCell label="Extra Costs" value={formatCurrency(totalExtraCosts)} />
         </div>
         <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4">
-          <CostCell label="Total Invested" value={formatCurrency(summary.totalInvested)} />
+          <ValueCell label="Total Invested" value={formatCurrency(summary.totalInvested)} />
         </div>
         <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4">
           <p className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">
@@ -122,18 +122,32 @@ const BundleDetailPage: FC = () => {
               No items yet. Add items to start splitting costs.
             </div>
           ) : (
-            items.map((item: Item) => (
-              <ItemRow
-                key={item.id}
-                item={item}
-                onMarkSold={(id) => {
-                  const found = items.find((i) => i.id === id);
-                  if (found) setSoldItem(found);
-                }}
-                onEdit={() => {}}
-                onDelete={(id) => dispatch(deleteItem(id))}
-              />
-            ))
+            <>
+              {/* Column headers */}
+              <div className="hidden sm:flex items-center gap-3 py-2 border-b border-slate-100 dark:border-slate-800">
+                <div className="flex-1" />
+                <div className="grid grid-cols-4 gap-4 text-right shrink-0 w-[340px]">
+                  {["Cost", "Break-even", "Min. sale", "Profit"].map((h) => (
+                    <p key={h} className="text-xs text-slate-400 dark:text-slate-500">{h}</p>
+                  ))}
+                </div>
+                {/* spacer to align with the action buttons column */}
+                <div className="w-[141px]" />
+              </div>
+
+              {items.map((item: Item) => (
+                <ItemRow
+                  key={item.id}
+                  item={item}
+                  onMarkSold={(id) => {
+                    const found = items.find((i) => i.id === id);
+                    if (found) setSoldItem(found);
+                  }}
+                  onEdit={() => {}}
+                  onDelete={(id) => dispatch(deleteItem(id))}
+                />
+              ))}
+            </>
           )}
         </div>
 

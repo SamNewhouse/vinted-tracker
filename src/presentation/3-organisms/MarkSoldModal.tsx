@@ -6,7 +6,7 @@ import { calcItemProfit, formatCurrency } from "../../utils/finance";
 import type { Item, CostCategory, ItemSaleCost } from "../../types";
 import Button from "../1-atoms/Button";
 import Input from "../1-atoms/Input";
-import CostCell from "../1-atoms/CostCell";
+import ValueCell from "../1-atoms/ValueCell";
 import ProfitValue from "../1-atoms/ProfitValue";
 import Modal from "../1-atoms/Modal";
 
@@ -68,8 +68,8 @@ const MarkSoldModal: FC<Props> = ({ item, onClose }) => {
     <Modal title={`Mark "${item.name}" as Sold`} onClose={onClose}>
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="grid grid-cols-2 gap-3">
-          <CostCell label="Break-even" value={formatCurrency(item.breakEvenPrice)} colour="muted" />
-          <CostCell
+          <ValueCell label="Break-even" value={formatCurrency(item.breakEvenPrice)} colour="muted" />
+          <ValueCell
             label="Min. sale (15%)"
             value={formatCurrency(item.minSalePrice)}
             colour="warning"

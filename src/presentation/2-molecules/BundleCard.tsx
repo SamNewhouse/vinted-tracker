@@ -6,7 +6,7 @@ import { formatCurrency, formatPercent } from "../../utils/finance";
 import Badge from "../1-atoms/Badge";
 import Button from "../1-atoms/Button";
 import ProgressBar from "../1-atoms/ProgressBar";
-import CostCell from "../1-atoms/CostCell";
+import ValueCell from "../1-atoms/ValueCell";
 import ProfitValue from "../1-atoms/ProfitValue";
 
 interface Props {
@@ -38,8 +38,8 @@ const BundleCard: FC<Props> = ({ bundle, onView, onDelete }) => {
       </div>
 
       <div className="grid grid-cols-3 gap-3 mb-4">
-        <CostCell label="Invested" value={formatCurrency(summary.totalInvested)} />
-        <CostCell label="Revenue" value={formatCurrency(summary.totalRevenue)} colour="profit" />
+        <ValueCell label="Invested" value={formatCurrency(summary.totalInvested)} />
+        <ValueCell label="Revenue" value={formatCurrency(summary.totalRevenue)} colour="profit" />
         <div>
           <p className="text-xs text-slate-500 dark:text-slate-500 mb-0.5">P&amp;L</p>
           <ProfitValue value={summary.totalProfit} />
