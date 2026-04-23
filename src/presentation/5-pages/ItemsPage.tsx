@@ -1,5 +1,5 @@
 "use client";
-import { FC, memo} from "react";
+import { FC, memo } from "react";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import { selectFilteredItems } from "../../store/selectors";
 import { setFilter, clearFilters, setView, setActiveBundleId } from "../../store/trackerSlice";
