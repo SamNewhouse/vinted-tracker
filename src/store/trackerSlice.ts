@@ -42,7 +42,9 @@ const trackerSlice = createSlice({
     addBundle(
       state,
       action: PayloadAction<{
-        bundle: Omit<Bundle, "id" | "createdAt" | "updatedAt" | "extraCosts">;
+        bundle: Omit<Bundle, "id" | "createdAt" | "updatedAt"> & {
+          extraCosts: Omit<BundleExtraCost, "id">[];
+        }
         draftItems: DraftItem[];
       }>,
     ) {
@@ -56,7 +58,7 @@ const trackerSlice = createSlice({
       state.bundles.push({
         ...bundle,
         id: bundleId,
-        extraCosts: [],
+        extraCosts: bundle.extraCosts.map((c) => ({ ...c, id: uuidv4() })),
         createdAt: now,
         updatedAt: now,
       });
@@ -82,6 +84,13 @@ const trackerSlice = createSlice({
           updatedAt: now,
         });
       }
+
+      // Recalculate now that extraCosts are on the bundle
+      const newBundle = state.bundles.find((b) => b.id === bundleId)!;
+      recalculateAllocations(newBundle, state.items);
+
+      state.activeBundleId = bundleId;
+      state.view = "bundle-detail";
     },
 
     updateBundle(
