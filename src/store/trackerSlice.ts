@@ -19,7 +19,7 @@ interface TrackerState {
   filters: FilterState;
 }
 
-const initialState: TrackerState = {
+export const initialState: TrackerState = {
   bundles: [],
   items: [],
   activeBundleId: null,

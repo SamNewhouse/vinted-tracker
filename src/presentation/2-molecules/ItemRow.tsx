@@ -10,6 +10,7 @@ interface Props {
   onMarkSold: (item: Item) => void;
   onEdit: (item: Item) => void;
   onDelete: (itemId: string) => void;
+  onBundleClick?: (bundleId: string) => void;
 }
 
 const statusVariant = {
@@ -20,7 +21,14 @@ const statusVariant = {
   unsellable: "error",
 } as const;
 
-const ItemRow: FC<Props> = ({ item, showBundle = false, onMarkSold, onEdit, onDelete }) => {
+const ItemRow: FC<Props> = ({
+  item,
+  showBundle = false,
+  onMarkSold,
+  onEdit,
+  onDelete,
+  onBundleClick,
+}) => {
   const profit =
     item.salePrice != null
       ? calcItemProfit(
@@ -42,7 +50,12 @@ const ItemRow: FC<Props> = ({ item, showBundle = false, onMarkSold, onEdit, onDe
           <Badge label={item.status} status={statusVariant[item.status]} />
         </div>
         {showBundle && (
-          <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">{item.bundleName}</p>
+          <button
+            onClick={() => onBundleClick?.(item.bundleId)}
+            className="text-xs text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 mt-0.5 text-left transition-colors"
+          >
+            {item.bundleName} →
+          </button>
         )}
         {item.description && (
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 truncate">

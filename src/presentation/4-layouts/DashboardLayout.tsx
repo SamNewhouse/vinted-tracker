@@ -10,6 +10,7 @@ interface Props {
 
 const navItems: { label: string; view: ViewMode; icon: string }[] = [
   { label: "Dashboard", view: "dashboard", icon: "◈" },
+  { label: "Items", view: "items", icon: "▤" },
   { label: "Bundles", view: "bundles", icon: "◻" },
   { label: "Analytics", view: "analytics", icon: "◧" },
 ];

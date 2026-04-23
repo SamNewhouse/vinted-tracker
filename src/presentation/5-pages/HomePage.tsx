@@ -6,6 +6,7 @@ import DashboardPage from "./DashboardPage";
 import BundlesPage from "./BundlesPage";
 import BundleDetailPage from "./BundleDetailPage";
 import AddBundleForm from "../3-organisms/AddBundleForm";
+import ItemsPage from "./ItemsPage";
 
 const HomePage: FC = () => {
   const view = useAppSelector((s) => s.tracker.view);
@@ -14,6 +15,8 @@ const HomePage: FC = () => {
     switch (view) {
       case "dashboard":
         return <DashboardPage />;
+      case "items":
+        return <ItemsPage />;
       case "bundles":
         return <BundlesPage />;
       case "bundle-detail":

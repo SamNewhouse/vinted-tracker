@@ -1,7 +1,7 @@
 "use client";
 import { FC, memo, useState } from "react";
 import { useAppDispatch } from "../../store/hooks";
-import { addBundle, setActiveBundleId, setView } from "../../store/trackerSlice";
+import { addBundle, setView } from "../../store/trackerSlice";
 import type { DraftItem, DraftCost } from "../../types";
 import Button from "../1-atoms/Button";
 import Input from "../1-atoms/Input";
