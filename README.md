@@ -1,121 +1,52 @@
-# create-nttb
+# VintedTracker
 
-## Next.js TypeScript Tailwind Boilerplate by Sam Newhouse
+A personal finance tracker for Vinted resellers. Track bundles of clothing you buy, individual items within them, and monitor your profit & loss across everything.
 
-This boilerplate is structured to organise code clearly and enable scalable development using Atomic Design principles and Next.js 16 with TypeScript and Tailwind CSS. It provides a robust architectural foundation for scalable React applications, blending the latest tools and community conventions into a ready-to-use starter kit.
+## What it does
 
-Designed for rapid project bootstrapping and consistent best practice, this opinionated setup saves you hours of repetitive work each time you start a new project. With an organised component hierarchy, streamlined state and HTTP management, and instant access to modern developer experience features, you’ll be able to jump straight into feature development and deliver high-quality apps faster.
+- **Bundles** — Log purchases (car boots, charity shops, etc.) with costs and extra expenses (travel, parking, cleaning)
+- **Items** — Track each item in a bundle, auto-calculated break-even and minimum sale prices
+- **Items list** — Cross-bundle view of all items with filtering by status, bundle, and sort options
+- **Dashboard** — Top-level stats: total spend, revenue, profit, ROI
+- **Analytics** — Coming soon
 
----
+## Tech stack
 
-## Getting Started
+- Next.js 16 (App Router)
+- TypeScript
+- Redux Toolkit + redux-persist (localStorage)
+- Tailwind CSS
+- Atomic design component structure (`1-atoms` → `5-pages`)
 
-Use one of the following commands to initialise your project quickly:
-
-```bash
-npm create nttb app-name
-```
-OR
-```bash
-npx create-nttb app-name
-```
-
-When the setup finishes, navigate into your new app directory and install dependencies:
+## Getting started
 
 ```bash
-cd app-name
 npm install
-```
-You’re now ready to start developing—see below for more useful commands.
-
-### Environment variables 
-Copy the example env file and set your values:
-
-```bash
-cp .env.example .env
-```
-
-### Common codebase scripts
-
-**Run Development Server**
-```bash
 npm run dev
 ```
 
-**Format Code**
-```bash
-npm run format
+Open [http://localhost:3000](http://localhost:3000).
+
+## Project structure
+
+```
+src/
+  presentation/
+    1-atoms/        # Buttons, inputs, badges
+    2-molecules/    # ItemRow, BundleCard
+    3-organisms/    # Forms, modals, lists
+    4-layouts/      # DashboardLayout (sidebar + mobile nav)
+    5-pages/        # Page-level components (view-switched via Redux)
+  store/
+    trackerSlice.ts # All state, actions, reducers
+    selectors.ts    # Memoised selectors
+    store.ts        # Redux store + persist config
+  types/
+    index.ts        # All domain types
+  utils/
+    finance.ts      # calcItemProfit, formatCurrency
 ```
 
-**Build for Production**
-```bash
-npm run build
-```
+## Navigation
 
-**Start Production Server**
-```bash
-npm run start
-```
----
-
-## Key Packages Used
-
-- **Next.js 16**  
-  React framework providing server-side rendering, routing, and API routes.
-
-- **Tailwind CSS**  
-  Utility-first CSS framework and PostCSS integration for rapid styling.
-
-- **TypeScript**  
-  Adds static typing to JavaScript for better developer experience and fewer errors.
-
-- **Axios**  
-  HTTP client for making API requests easily.
-
-- **Prettier**  
-  Automated code formatter enforcing consistent formatting.
-
----
-
-## Learn More
-
-To learn more about Next.js, TypeScript, Tailwind, Axios, and Prettier, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - Learn about Next.js features and API.
-- [TypeScript](https://www.typescriptlang.org/) - Learn about TypeScript and all of its features.
-- [Tailwind CSS](https://tailwindcss.com/) - The holy grail of all things Tailwind.
-- [Axios Documentation](https://axios-http.com/docs/intro) - Comprehensive guide to the Axios HTTP client.
-- [Prettier Documentation](https://prettier.io/docs/en/index.html) - Learn how to use Prettier for consistent code formatting.
-
-## Folder Structure
-
-```bash
-public/                 # Static assets (images, favicon, etc.)
-src/                    # Source code
-├── app/                # Routing, pages, API
-│   ├── api/            # API handlers
-├── config/             # Config and env variables
-├── presentation/       # Components by Atomic Design
-│   ├── 1-atoms/        # Basic UI elements
-│   ├── 2-molecules/    # UI groups
-│   ├── 3-organisms/    # Sections
-│   ├── 4-layouts/      # Layout components
-│   └── 5-pages/        # Complete pages
-├── styles/             # Global CSS/Tailwind
-├── types/              # TypeScript types
-└── utils/              # Utility functions
-```
----
-
-## SEO: Automatic sitemap and robots.txt
-
-Every project scaffolded with `create-nttb` includes dynamic generation of:
-
-- `/sitemap.xml` – built from your `src/app` folder structure with sensible defaults for `lastmod`, `priority`, and `changefreq`.
-- `/robots.txt` – served from a route handler that always points to the current `/sitemap.xml` URL and disallows `/api/`.
-
-These files are generated at request time in production with incremental revalidation, so they stay up to date automatically as you add new top-level routes under `src/app`.
-
-## Licence
-
-This project is licensed under the ISC Licence - see the [LICENSE](./LICENSE) file for details.
+Routing is Redux-based (`setView`), not Next.js file routing. All views render inside `HomePage.tsx` via a switch on `state.tracker.view`.
