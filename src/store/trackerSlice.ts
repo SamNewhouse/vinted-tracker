@@ -10,6 +10,7 @@ import {
   ViewMode,
   FilterState,
 } from "../types";
+import { REHYDRATE } from "redux-persist";
 
 interface TrackerState {
   bundles: Bundle[];
@@ -276,6 +277,13 @@ const trackerSlice = createSlice({
     clearFilters(state) {
       state.filters = initialState.filters;
     },
+  },
+  extraReducers: (builder) => {
+    builder.addCase(REHYDRATE, (state, action: any) => {
+      if (action.key === "vinted-tracker-root") {
+        state.filters = initialState.filters;
+      }
+    });
   },
 });
 
