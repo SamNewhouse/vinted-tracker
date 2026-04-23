@@ -2,9 +2,7 @@
 import { FC, memo, useState } from "react";
 import { useAppDispatch } from "../../store/hooks";
 import { addExtraCost } from "../../store/trackerSlice";
-import type {
-  AdditionalCostCategory, CostCategoryOption, 
- } from "../../types";
+import type { ExtraCostCategory } from "../../types";
 import Input from "../1-atoms/Input";
 import Button from "../1-atoms/Button";
 import Select from "../1-atoms/Select";
@@ -14,16 +12,25 @@ interface Props {
   onClose: () => void;
 }
 
+interface CostCategoryOption {
+  value: ExtraCostCategory;
+  label: string;
+  hint: string;
+}
+
 const COST_CATEGORIES: CostCategoryOption[] = [
-  { value: "postage", label: "Postage in", hint: "Postage paid to receive the bundle" },
-  { value: "car_boot_entry", label: "Car boot entry", hint: "Entry fee for the car boot / market" },
-  { value: "other", label: "Other", hint: "Any other upfront cost before selling" },
+  { value: "postage",        label: "Postage in",      hint: "Postage paid to receive the bundle" },
+  { value: "car_boot_entry", label: "Car boot entry",  hint: "Entry fee for the car boot / market" },
+  { value: "packaging",      label: "Packaging",       hint: "Bags, boxes, bubble wrap bought upfront" },
+  { value: "repair",         label: "Repair",          hint: "Repairs or alterations before selling" },
+  { value: "cleaning",       label: "Cleaning",        hint: "Dry cleaning, washing, specialist cleaning" },
+  { value: "other",          label: "Other",           hint: "Any other upfront cost before selling" },
 ];
 
 const AddExtraCostForm: FC<Props> = ({ bundleId, onClose }) => {
   const dispatch = useAppDispatch();
   const [label, setLabel] = useState("");
-  const [category, setCategory] = useState<AdditionalCostCategory>("car_boot_entry");
+  const [category, setCategory] = useState<ExtraCostCategory>("car_boot_entry");
   const [amount, setAmount] = useState("");
   const [amountError, setAmountError] = useState("");
 
@@ -45,7 +52,9 @@ const AddExtraCostForm: FC<Props> = ({ bundleId, onClose }) => {
         cost: {
           label: autoLabel,
           category,
+          timing: "purchase", // this form is always for upfront / purchase-side costs
           amount: Number(amount),
+          // no itemId — split equally across all items
         },
       }),
     );
@@ -55,7 +64,7 @@ const AddExtraCostForm: FC<Props> = ({ bundleId, onClose }) => {
   return (
     <div className="rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 p-5 mt-4">
       <h3 className="font-heading font-semibold text-sm text-slate-900 dark:text-white mb-4">
-        Add Upfront Cost
+        Add Purchase Cost
       </h3>
       <form onSubmit={handleSubmit} className="space-y-3">
         <Select
@@ -64,7 +73,7 @@ const AddExtraCostForm: FC<Props> = ({ bundleId, onClose }) => {
           options={COST_CATEGORIES.map((c) => ({ value: c.value, label: c.label }))}
           hint={selectedHint}
           onChange={(e) => {
-            setCategory(e.target.value as AdditionalCostCategory);
+            setCategory(e.target.value as ExtraCostCategory);
             setLabel("");
           }}
         />

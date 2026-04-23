@@ -1,15 +1,15 @@
 "use client";
 import { FC, memo, useState } from "react";
 import { useAppDispatch } from "../../store/hooks";
-import { markItemStatus } from "../../store/trackerSlice";
+import { markItemStatus, addExtraCost } from "../../store/trackerSlice";
 import {
   calcBreakEvenPrice,
   calcItemProfit,
   calcMinSalePrice,
-  calcTotalSaleCosts,
+  calcTotalAdditionalCosts,
   formatCurrency,
 } from "../../utils/finance";
-import type { BundleItem, SaleCosts } from "../../types";
+import type { BundleItem, ExtraCost, ExtraCostCategory } from "../../types";
 import Button from "../1-atoms/Button";
 import Input from "../1-atoms/Input";
 import CostCell from "../1-atoms/CostCell";
@@ -22,25 +22,55 @@ interface Props {
   onClose: () => void;
 }
 
-const EMPTY_SALE_COSTS: SaleCosts = { postageOut: 0, packaging: 0, platformFee: 0, otherCosts: 0 };
+const DEFAULT_COST_ROWS: Array<{ key: ExtraCostCategory; label: string; hint: string }> = [
+  { key: "postage", label: "Postage out", hint: "Shipping label cost" },
+  { key: "packaging", label: "Packaging", hint: "Box, bag, bubble wrap" },
+  { key: "platform_fee", label: "Platform fee", hint: "Vinted, eBay, Depop fee" },
+  { key: "other", label: "Other", hint: "Any other sale cost" },
+];
 
-const MarkSoldModal: FC<Props> = ({ bundleId, item, onClose }) => {
+function buildInitialCosts(existingCosts: ExtraCost[], itemId: string): Record<string, string> {
+  const map: Record<string, string> = {};
+  for (const row of DEFAULT_COST_ROWS) {
+    const found = existingCosts.find(
+      (c) => c.timing === "sale" && c.category === row.key && c.itemId === itemId,
+    );
+    map[row.key] = found ? found.amount.toFixed(2) : "";
+  }
+  return map;
+}
+
+// Builds a preview list for the profit calculation — not dispatched directly
+function costMapToPreview(map: Record<string, string>): Array<{ amount: number }> {
+  return DEFAULT_COST_ROWS.map((row) => ({ amount: Number(map[row.key]) || 0 })).filter(
+    (c) => c.amount > 0,
+  );
+}
+
+interface MarkSoldModalProps extends Props {
+  /** All extra costs already on the bundle — needed to pre-fill existing sale costs */
+  bundleExtraCosts: ExtraCost[];
+}
+
+const MarkSoldModal: FC<MarkSoldModalProps> = ({ bundleId, item, bundleExtraCosts, onClose }) => {
   const dispatch = useAppDispatch();
   const [salePrice, setSalePrice] = useState(item.salePrice?.toFixed(2) ?? "");
-  const [saleCosts, setSaleCosts] = useState<SaleCosts>(item.saleCosts ?? { ...EMPTY_SALE_COSTS });
+  const [costMap, setCostMap] = useState<Record<string, string>>(
+    buildInitialCosts(bundleExtraCosts, item.id),
+  );
   const [error, setError] = useState("");
 
-  const setCost = (key: keyof SaleCosts, value: string) =>
-    setSaleCosts((prev) => ({ ...prev, [key]: Number(value) || 0 }));
+  const setCost = (key: string, value: string) => setCostMap((prev) => ({ ...prev, [key]: value }));
 
+  const costPreview = costMapToPreview(costMap);
   const parsedSalePrice = Number(salePrice) || 0;
-  const totalSaleCosts = calcTotalSaleCosts(saleCosts);
+  const totalAdditionalCosts = calcTotalAdditionalCosts(costPreview);
   const breakEven = calcBreakEvenPrice(item.allocatedCost, item.extraCostsShare);
   const minSale = calcMinSalePrice(item.allocatedCost, item.extraCostsShare);
-  const netRevenue = parsedSalePrice - totalSaleCosts;
+  const netRevenue = parsedSalePrice - totalAdditionalCosts;
   const profit =
     parsedSalePrice > 0
-      ? calcItemProfit(parsedSalePrice, item.allocatedCost, item.extraCostsShare, saleCosts)
+      ? calcItemProfit(parsedSalePrice, item.allocatedCost, item.extraCostsShare, costPreview)
       : null;
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -49,15 +79,36 @@ const MarkSoldModal: FC<Props> = ({ bundleId, item, onClose }) => {
       setError("Enter the sale price");
       return;
     }
+
+    // 1. Mark the item as sold with just the sale price
     dispatch(
       markItemStatus({
         bundleId,
         itemId: item.id,
         status: "sold",
         salePrice: Number(salePrice),
-        saleCosts,
       }),
     );
+
+    // 2. Dispatch each non-zero sale cost as a proper ExtraCost on the bundle
+    for (const row of DEFAULT_COST_ROWS) {
+      const amount = Number(costMap[row.key]) || 0;
+      if (amount > 0) {
+        dispatch(
+          addExtraCost({
+            bundleId,
+            cost: {
+              label: row.label,
+              category: row.key,
+              timing: "sale",
+              amount,
+              itemId: item.id, // pinned to this item, not split
+            },
+          }),
+        );
+      }
+    }
+
     onClose();
   };
 
@@ -96,56 +147,26 @@ const MarkSoldModal: FC<Props> = ({ bundleId, item, onClose }) => {
 
           <div>
             <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-3">
-              Sale Costs{" "}
+              Additional Costs{" "}
               <span className="font-normal normal-case tracking-normal">
                 (optional — deducted from profit)
               </span>
             </p>
             <div className="grid grid-cols-2 gap-3">
-              <Input
-                label="Postage out"
-                type="number"
-                step="0.01"
-                min="0"
-                placeholder="0.00"
-                prefix="£"
-                value={saleCosts.postageOut || ""}
-                onChange={(e) => setCost("postageOut", e.target.value)}
-                hint="Shipping label cost"
-              />
-              <Input
-                label="Packaging"
-                type="number"
-                step="0.01"
-                min="0"
-                placeholder="0.00"
-                prefix="£"
-                value={saleCosts.packaging || ""}
-                onChange={(e) => setCost("packaging", e.target.value)}
-                hint="Box, bag, bubble wrap"
-              />
-              <Input
-                label="Platform fee"
-                type="number"
-                step="0.01"
-                min="0"
-                placeholder="0.00"
-                prefix="£"
-                value={saleCosts.platformFee || ""}
-                onChange={(e) => setCost("platformFee", e.target.value)}
-                hint="Vinted, eBay, Depop fee"
-              />
-              <Input
-                label="Other"
-                type="number"
-                step="0.01"
-                min="0"
-                placeholder="0.00"
-                prefix="£"
-                value={saleCosts.otherCosts || ""}
-                onChange={(e) => setCost("otherCosts", e.target.value)}
-                hint="Any other sale cost"
-              />
+              {DEFAULT_COST_ROWS.map((row) => (
+                <Input
+                  key={row.key}
+                  label={row.label}
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  placeholder="0.00"
+                  prefix="£"
+                  value={costMap[row.key]}
+                  onChange={(e) => setCost(row.key, e.target.value)}
+                  hint={row.hint}
+                />
+              ))}
             </div>
           </div>
 
@@ -154,8 +175,8 @@ const MarkSoldModal: FC<Props> = ({ bundleId, item, onClose }) => {
               <div className="grid grid-cols-3 divide-x divide-slate-100 dark:divide-slate-800">
                 <div className="px-4 py-3 text-center">
                   <CostCell
-                    label="Sale costs"
-                    value={formatCurrency(totalSaleCosts)}
+                    label="Additional costs"
+                    value={formatCurrency(totalAdditionalCosts)}
                     colour="muted"
                   />
                 </div>

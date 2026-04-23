@@ -1,6 +1,6 @@
 import { createSelector } from "@reduxjs/toolkit";
 import type { RootState } from "./store";
-import type { Bundle, BundleSummary, DashboardStats } from "../types";
+import { Bundle, BundleSummary, DashboardStats } from "../types";
 
 const selectBundles = (state: RootState) => state.tracker.bundles;
 const selectFilters = (state: RootState) => state.tracker.filters;
@@ -12,8 +12,18 @@ export const selectActiveBundle = createSelector(
 );
 
 export const selectBundleSummary = (bundle: Bundle): BundleSummary => {
-  const totalExtraCosts = bundle.extraCosts.reduce((s, c) => s + c.amount, 0);
-  const totalInvested = bundle.purchaseCost + totalExtraCosts;
+  const purchaseExtraCosts = bundle.extraCosts
+    .filter((c) => c.timing === "purchase")
+    .reduce((s, c) => s + c.amount, 0);
+
+  const saleExtraCosts = bundle.extraCosts
+    .filter((c) => c.timing === "sale")
+    .reduce((s, c) => s + c.amount, 0);
+
+  const totalPurchaseCosts = bundle.purchaseCost + purchaseExtraCosts;
+  const totalSaleCosts = saleExtraCosts;
+  const totalInvested = totalPurchaseCosts + totalSaleCosts;
+
   const soldItems = bundle.items.filter((i) => i.status === "sold");
   const totalRevenue = soldItems.reduce((s, i) => s + (i.salePrice ?? 0), 0);
   const totalProfit = totalRevenue - totalInvested;
@@ -21,11 +31,12 @@ export const selectBundleSummary = (bundle: Bundle): BundleSummary => {
 
   const itemCount = bundle.items.length;
   const perItemCost = itemCount > 0 ? totalInvested / itemCount : 0;
-  // Minimum sale price = per-item cost * 1.15 to allow 15% margin
   const averageMinSalePrice = perItemCost * 1.15;
 
   return {
     bundleId: bundle.id,
+    totalPurchaseCosts,
+    totalSaleCosts,
     totalInvested,
     totalRevenue,
     totalProfit,

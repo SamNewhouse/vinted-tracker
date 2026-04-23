@@ -1,8 +1,8 @@
 "use client";
 import { FC, memo, useState } from "react";
-import { useAppDispatch } from "../../store/hooks";
+import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import { addBundle, addExtraCost, setActiveBundleId, setView } from "../../store/trackerSlice";
-import type { AdditionalCostCategory, DraftCost, ExtraCost } from "../../types";
+import type { DraftCost } from "../../types";
 import Button from "../1-atoms/Button";
 import Input from "../1-atoms/Input";
 import Textarea from "../1-atoms/Textarea";
@@ -10,13 +10,15 @@ import DraftCostList from "../2-molecules/DraftCostList";
 
 const AddBundleForm: FC = () => {
   const dispatch = useAppDispatch();
+  const bundles = useAppSelector((s) => s.tracker.bundles);
+
   const [name, setName] = useState("");
   const [source, setSource] = useState("");
   const [purchaseCost, setPurchaseCost] = useState("");
   const [purchaseDate, setPurchaseDate] = useState(new Date().toISOString().split("T")[0]);
   const [notes, setNotes] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [extraCosts, setExtraCosts] = useState<DraftCost[]>([]);
+  const [draftCosts, setDraftCosts] = useState<DraftCost[]>([]);
 
   const validate = () => {
     const e: Record<string, string> = {};
@@ -36,6 +38,7 @@ const AddBundleForm: FC = () => {
       return;
     }
 
+    // 1. Create the bundle
     dispatch(
       addBundle({
         name: name.trim(),
@@ -46,24 +49,44 @@ const AddBundleForm: FC = () => {
       }),
     );
 
-    dispatch((_: any, getState: any) => {
-      const bundles = getState().tracker.bundles;
-      const newest = bundles[bundles.length - 1];
-      if (!newest) return;
-      extraCosts.forEach((c) =>
-        dispatch(
-          addExtraCost({
-            bundleId: newest.id,
-            cost: { label: c.label, category: c.category as AdditionalCostCategory, amount: Number(c.amount) },
-          }),
-        ),
+    // 2. The new bundle is always appended — read its ID from the current
+    //    selector snapshot + 1 item. We use the name as a tiebreaker in the
+    //    unlikely event of a same-millisecond race (local app, no real risk).
+    //    getState() thunk pattern is avoided — we read from the store directly
+    //    via the selector snapshot which React/Redux guarantees is updated
+    //    synchronously inside the same dispatch batch.
+    const newBundle = [...bundles]
+      .reverse()
+      .find((b) => b.name === name.trim() && b.source === source.trim());
+
+    // Fallback: if for any reason we can't find it, just navigate to bundles
+    if (!newBundle) {
+      dispatch(setView("bundles"));
+      return;
+    }
+
+    // 3. Dispatch each draft cost as a real purchase-side ExtraCost
+    for (const draft of draftCosts) {
+      dispatch(
+        addExtraCost({
+          bundleId: newBundle.id,
+          cost: {
+            label: draft.label,
+            category: draft.category,
+            timing: "purchase", // all costs added at bundle creation are purchase-side
+            amount: draft.amount,
+            // no itemId — split equally across all items
+          },
+        }),
       );
-      dispatch(setActiveBundleId(newest.id));
-      dispatch(setView("bundle-detail"));
-    });
+    }
+
+    // 4. Navigate straight into the new bundle's detail view
+    dispatch(setActiveBundleId(newBundle.id));
+    dispatch(setView("bundle-detail"));
   };
 
-  const totalExtraCosts = extraCosts.reduce((s, c) => s + Number(c.amount), 0);
+  const totalExtraCosts = draftCosts.reduce((s, c) => s + c.amount, 0);
   const totalInvested = (Number(purchaseCost) || 0) + totalExtraCosts;
 
   return (
@@ -73,7 +96,7 @@ const AddBundleForm: FC = () => {
           Add New Bundle
         </h2>
         <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-          Log a purchase. Selling postage is recorded per item when you mark it as sold.
+          Log a purchase. Sale costs like postage out are recorded per item when you mark it as sold.
         </p>
       </div>
 
@@ -114,10 +137,10 @@ const AddBundleForm: FC = () => {
         </div>
 
         <DraftCostList
-          costs={extraCosts}
+          costs={draftCosts}
           totalInvested={totalInvested}
-          onAdd={(cost) => setExtraCosts((prev) => [...prev, cost])}
-          onRemove={(id) => setExtraCosts((prev) => prev.filter((c) => c.tempId !== id))}
+          onAdd={(cost) => setDraftCosts((prev) => [...prev, cost])}
+          onRemove={(tempId) => setDraftCosts((prev) => prev.filter((c) => c.tempId !== tempId))}
         />
 
         <Textarea

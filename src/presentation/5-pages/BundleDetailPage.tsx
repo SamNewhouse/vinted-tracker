@@ -36,6 +36,10 @@ const BundleDetailPage: FC = () => {
   }
 
   const summary = selectBundleSummary(bundle);
+
+  // Split costs for display — purchase costs shown in the extra costs section,
+  // sale costs are pinned to items and shown inline on each item row
+  const purchaseExtraCosts = bundle.extraCosts.filter((c: ExtraCost) => c.timing === "purchase");
   const totalExtraCosts = bundle.extraCosts.reduce((s: number, c: ExtraCost) => s + c.amount, 0);
 
   return (
@@ -94,7 +98,7 @@ const BundleDetailPage: FC = () => {
       <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
         <SectionHeader
           title="Items"
-          subtitle={`${summary.soldItemCount}/${bundle.items.length} sold · Min. sale price = cost ÷ items + extras + 15% margin`}
+          subtitle={`${summary.soldItemCount}/${bundle.items.length} sold · Min. sale = cost + 15% margin`}
           action={
             <Button
               size="sm"
@@ -124,7 +128,9 @@ const BundleDetailPage: FC = () => {
                   if (found) setSoldItem(found);
                 }}
                 onEdit={() => {}}
-                onDelete={(id: string) => dispatch(deleteItem({ bundleId: bundle.id, itemId: id }))}
+                onDelete={(id: string) =>
+                  dispatch(deleteItem({ bundleId: bundle.id, itemId: id }))
+                }
               />
             ))
           )}
@@ -137,11 +143,11 @@ const BundleDetailPage: FC = () => {
         )}
       </div>
 
-      {/* Extra costs section */}
+      {/* Purchase extra costs section — sale costs live on individual items */}
       <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
         <SectionHeader
-          title="Extra Costs"
-          subtitle="Postage, car boot entry fees, packaging etc — split equally across all items"
+          title="Purchase Costs"
+          subtitle="Car boot entry, inbound postage, repair, cleaning etc — split equally across all items"
           action={
             <Button
               size="sm"
@@ -157,12 +163,12 @@ const BundleDetailPage: FC = () => {
         />
 
         <div className="px-5">
-          {bundle.extraCosts.length === 0 ? (
+          {purchaseExtraCosts.length === 0 ? (
             <div className="py-10 text-center text-slate-400 dark:text-slate-500 text-sm">
-              No extra costs yet.
+              No purchase costs yet.
             </div>
           ) : (
-            bundle.extraCosts.map((cost: ExtraCost) => (
+            purchaseExtraCosts.map((cost: ExtraCost) => (
               <ExtraCostRow
                 key={cost.id}
                 cost={cost}
@@ -191,8 +197,14 @@ const BundleDetailPage: FC = () => {
         </div>
       )}
 
+      {/* Mark sold modal — passes bundle's full cost array for pre-fill */}
       {soldItem && (
-        <MarkSoldModal bundleId={bundle.id} item={soldItem} onClose={() => setSoldItem(null)} />
+        <MarkSoldModal
+          bundleId={bundle.id}
+          item={soldItem}
+          bundleExtraCosts={bundle.extraCosts}
+          onClose={() => setSoldItem(null)}
+        />
       )}
     </div>
   );

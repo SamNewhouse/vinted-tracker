@@ -1,10 +1,11 @@
 import { FC, memo } from "react";
-import type { BundleItem } from "../../types";
+import type { BundleItem, ExtraCost } from "../../types";
 import {
   formatCurrency,
   calcMinSalePrice,
   calcBreakEvenPrice,
   calcItemProfit,
+  calcTotalAdditionalCosts,
 } from "../../utils/finance";
 import Badge from "../1-atoms/Badge";
 import Button from "../1-atoms/Button";
@@ -13,6 +14,7 @@ import ProfitValue from "../1-atoms/ProfitValue";
 
 interface Props {
   item: BundleItem;
+  bundleExtraCosts: ExtraCost[];
   onMarkSold: (itemId: string) => void;
   onEdit: (itemId: string) => void;
   onDelete: (itemId: string) => void;
@@ -26,12 +28,19 @@ const statusVariant = {
   unsellable: "error",
 } as const;
 
-const ItemRow: FC<Props> = ({ item, onMarkSold, onEdit, onDelete }) => {
+const ItemRow: FC<Props> = ({ item, bundleExtraCosts, onMarkSold, onEdit, onDelete }) => {
   const minSalePrice = calcMinSalePrice(item.allocatedCost, item.extraCostsShare);
   const breakEven = calcBreakEvenPrice(item.allocatedCost, item.extraCostsShare);
+
+  // Sale costs pinned to this item — timing: "sale" + itemId match
+  const saleCosts = bundleExtraCosts.filter(
+    (c) => c.timing === "sale" && c.itemId === item.id,
+  );
+  const totalSaleCosts = calcTotalAdditionalCosts(saleCosts);
+
   const profit =
     item.salePrice != null
-      ? calcItemProfit(item.salePrice, item.allocatedCost, item.extraCostsShare, item.saleCosts)
+      ? calcItemProfit(item.salePrice, item.allocatedCost, item.extraCostsShare, saleCosts)
       : null;
 
   return (
@@ -60,7 +69,14 @@ const ItemRow: FC<Props> = ({ item, onMarkSold, onEdit, onDelete }) => {
         <CostCell label="Min. sale" value={formatCurrency(minSalePrice)} colour="warning" />
         {item.status === "sold" && profit !== null && (
           <div>
-            <p className="text-xs text-slate-400 mb-0.5">Profit</p>
+            <p className="text-xs text-slate-400 mb-0.5">
+              Profit
+              {totalSaleCosts > 0 && (
+                <span className="text-slate-300 dark:text-slate-600 ml-1">
+                  (after {formatCurrency(totalSaleCosts)} costs)
+                </span>
+              )}
+            </p>
             <ProfitValue value={profit} />
           </div>
         )}

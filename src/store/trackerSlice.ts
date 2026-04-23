@@ -1,14 +1,6 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { v4 as uuidv4 } from "uuid";
-import {
-  Bundle,
-  BundleItem,
-  ExtraCost,
-  FilterState,
-  ItemStatus,
-  SaleCosts,
-  ViewMode,
-} from "../types";
+import { Bundle, ViewMode, FilterState, BundleItem, ItemStatus, ExtraCost } from "../types";
 
 interface TrackerState {
   bundles: Bundle[];
@@ -98,7 +90,11 @@ const trackerSlice = createSlice({
 
     updateItem(
       state,
-      action: PayloadAction<{ bundleId: string; itemId: string; changes: Partial<BundleItem> }>,
+      action: PayloadAction<{
+        bundleId: string;
+        itemId: string;
+        changes: Partial<BundleItem>;
+      }>,
     ) {
       const bundle = state.bundles.find((b) => b.id === action.payload.bundleId);
       if (!bundle) return;
@@ -125,24 +121,32 @@ const trackerSlice = createSlice({
         itemId: string;
         status: ItemStatus;
         salePrice?: number;
-        saleCosts?: SaleCosts;
       }>,
     ) {
       const bundle = state.bundles.find((b) => b.id === action.payload.bundleId);
       if (!bundle) return;
       const item = bundle.items.find((i) => i.id === action.payload.itemId);
-      if (item) {
-        item.status = action.payload.status;
-        if (action.payload.status === "sold") {
-          item.salePrice = action.payload.salePrice;
-          item.saleCosts = action.payload.saleCosts;
-          item.soldAt = new Date().toISOString();
-        }
-        bundle.updatedAt = new Date().toISOString();
+      if (!item) return;
+
+      item.status = action.payload.status;
+
+      if (action.payload.status === "sold") {
+        item.salePrice = action.payload.salePrice;
+        item.soldAt = new Date().toISOString();
+      } else {
+        // Revert — clear sale data and remove any sale-timed costs tied to this item
+        item.salePrice = undefined;
+        item.soldAt = undefined;
+        bundle.extraCosts = bundle.extraCosts.filter(
+          (c) => !(c.timing === "sale" && c.itemId === item.id),
+        );
       }
+
+      bundle.updatedAt = new Date().toISOString();
+      recalculateAllocations(bundle);
     },
 
-    // --- Extra Costs ---
+    // --- Extra Costs (purchase AND sale) ---
     addExtraCost(state, action: PayloadAction<{ bundleId: string; cost: Omit<ExtraCost, "id"> }>) {
       const bundle = state.bundles.find((b) => b.id === action.payload.bundleId);
       if (!bundle) return;
@@ -153,7 +157,11 @@ const trackerSlice = createSlice({
 
     updateExtraCost(
       state,
-      action: PayloadAction<{ bundleId: string; costId: string; changes: Partial<ExtraCost> }>,
+      action: PayloadAction<{
+        bundleId: string;
+        costId: string;
+        changes: Partial<ExtraCost>;
+      }>,
     ) {
       const bundle = state.bundles.find((b) => b.id === action.payload.bundleId);
       if (!bundle) return;
@@ -198,12 +206,22 @@ function recalculateAllocations(bundle: Bundle): void {
   if (itemCount === 0) return;
 
   const perItemPurchaseCost = bundle.purchaseCost / itemCount;
-  const totalExtraCosts = bundle.extraCosts.reduce((sum, c) => sum + c.amount, 0);
-  const perItemExtraCost = totalExtraCosts / itemCount;
+
+  // Only purchase-timed costs that aren't pinned to a specific item get split
+  const sharedPurchaseCosts = bundle.extraCosts
+    .filter((c) => c.timing === "purchase" && !c.itemId)
+    .reduce((sum, c) => sum + c.amount, 0);
+
+  const perItemExtraCost = sharedPurchaseCosts / itemCount;
 
   for (const item of bundle.items) {
+    // Item-specific purchase costs added directly on top of the split
+    const itemSpecificCosts = bundle.extraCosts
+      .filter((c) => c.timing === "purchase" && c.itemId === item.id)
+      .reduce((sum, c) => sum + c.amount, 0);
+
     item.allocatedCost = perItemPurchaseCost;
-    item.extraCostsShare = perItemExtraCost;
+    item.extraCostsShare = perItemExtraCost + itemSpecificCosts;
   }
 }
 
