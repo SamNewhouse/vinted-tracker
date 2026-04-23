@@ -15,10 +15,10 @@ const HomePage: FC = () => {
     switch (view) {
       case "dashboard":
         return <DashboardPage />;
-      case "items":
-        return <ItemsPage />;
       case "bundles":
         return <BundlesPage />;
+      case "items":
+        return <ItemsPage />;
       case "bundle-detail":
         return <BundleDetailPage />;
       case "add-bundle":
