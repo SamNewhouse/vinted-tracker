@@ -49,12 +49,11 @@ const ItemRow: FC<Props> = ({ item, onMarkSold, onEdit, onDelete }) => {
         )}
       </div>
 
-      <div className="grid grid-cols-4 gap-4 text-right shrink-0 w-[340px]">
+      <div className="grid grid-cols-3 gap-4 text-right shrink-0 w-[340px]">
         <ValueCell
           value={formatCurrency(item.allocatedPurchaseCost + item.allocatedExtraCostShare)}
           colour="muted"
         />
-        <ValueCell value={formatCurrency(item.breakEvenPrice)} colour="muted" />
         <ValueCell value={formatCurrency(item.minSalePrice)} colour="warning" />
         <ValueCell
           value={profit !== null ? formatCurrency(profit) : ""}
