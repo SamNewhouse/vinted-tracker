@@ -2,7 +2,7 @@
 import { FC, memo, useState } from "react";
 import { useAppDispatch } from "../../store/hooks";
 import { addBundle, addExtraCost, setActiveBundleId, setView } from "../../store/trackerSlice";
-import type { DraftCost, ExtraCostCategory } from "../../types";
+import type { AdditionalCostCategory, DraftCost, ExtraCost } from "../../types";
 import Button from "../1-atoms/Button";
 import Input from "../1-atoms/Input";
 import Textarea from "../1-atoms/Textarea";
@@ -31,16 +31,32 @@ const AddBundleForm: FC = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const errs = validate();
-    if (Object.keys(errs).length > 0) { setErrors(errs); return; }
+    if (Object.keys(errs).length > 0) {
+      setErrors(errs);
+      return;
+    }
 
-    dispatch(addBundle({ name: name.trim(), source: source.trim(), purchaseCost: Number(purchaseCost), purchaseDate, notes: notes.trim() || undefined }));
+    dispatch(
+      addBundle({
+        name: name.trim(),
+        source: source.trim(),
+        purchaseCost: Number(purchaseCost),
+        purchaseDate,
+        notes: notes.trim() || undefined,
+      }),
+    );
 
     dispatch((_: any, getState: any) => {
       const bundles = getState().tracker.bundles;
       const newest = bundles[bundles.length - 1];
       if (!newest) return;
       extraCosts.forEach((c) =>
-        dispatch(addExtraCost({ bundleId: newest.id, cost: { label: c.label, category: c.category as ExtraCostCategory, amount: Number(c.amount) } }))
+        dispatch(
+          addExtraCost({
+            bundleId: newest.id,
+            cost: { label: c.label, category: c.category as AdditionalCostCategory, amount: Number(c.amount) },
+          }),
+        ),
       );
       dispatch(setActiveBundleId(newest.id));
       dispatch(setView("bundle-detail"));
@@ -53,22 +69,48 @@ const AddBundleForm: FC = () => {
   return (
     <div className="max-w-xl mx-auto">
       <div className="mb-6">
-        <h2 className="font-heading font-bold text-xl text-slate-900 dark:text-white">Add New Bundle</h2>
+        <h2 className="font-heading font-bold text-xl text-slate-900 dark:text-white">
+          Add New Bundle
+        </h2>
         <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
           Log a purchase. Selling postage is recorded per item when you mark it as sold.
         </p>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-4">
-        <Input label="Bundle Name" placeholder="e.g. Car boot haul – 12 Apr"
-          value={name} onChange={(e) => setName(e.target.value)} error={errors.name} />
-        <Input label="Source" placeholder="e.g. Car boot – Wigan, Charity shop, Vinted"
-          value={source} onChange={(e) => setSource(e.target.value)} error={errors.source} />
+        <Input
+          label="Bundle Name"
+          placeholder="e.g. Car boot haul – 12 Apr"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          error={errors.name}
+        />
+        <Input
+          label="Source"
+          placeholder="e.g. Car boot – Wigan, Charity shop, Vinted"
+          value={source}
+          onChange={(e) => setSource(e.target.value)}
+          error={errors.source}
+        />
         <div className="grid grid-cols-2 gap-4">
-          <Input label="Total Purchase Cost" type="number" step="0.01" min="0" placeholder="0.00" prefix="£"
-            value={purchaseCost} onChange={(e) => setPurchaseCost(e.target.value)} error={errors.purchaseCost} />
-          <Input label="Purchase Date" type="date"
-            value={purchaseDate} onChange={(e) => setPurchaseDate(e.target.value)} error={errors.purchaseDate} />
+          <Input
+            label="Total Purchase Cost"
+            type="number"
+            step="0.01"
+            min="0"
+            placeholder="0.00"
+            prefix="£"
+            value={purchaseCost}
+            onChange={(e) => setPurchaseCost(e.target.value)}
+            error={errors.purchaseCost}
+          />
+          <Input
+            label="Purchase Date"
+            type="date"
+            value={purchaseDate}
+            onChange={(e) => setPurchaseDate(e.target.value)}
+            error={errors.purchaseDate}
+          />
         </div>
 
         <DraftCostList
@@ -78,12 +120,20 @@ const AddBundleForm: FC = () => {
           onRemove={(id) => setExtraCosts((prev) => prev.filter((c) => c.tempId !== id))}
         />
 
-        <Textarea label="Notes (optional)" placeholder="Any notes about this purchase..."
-          value={notes} onChange={(e) => setNotes(e.target.value)} />
+        <Textarea
+          label="Notes (optional)"
+          placeholder="Any notes about this purchase..."
+          value={notes}
+          onChange={(e) => setNotes(e.target.value)}
+        />
 
         <div className="flex gap-3 pt-2">
-          <Button type="submit" fullWidth>Create Bundle</Button>
-          <Button type="button" variant="ghost" onClick={() => dispatch(setView("bundles"))}>Cancel</Button>
+          <Button type="submit" fullWidth>
+            Create Bundle
+          </Button>
+          <Button type="button" variant="ghost" onClick={() => dispatch(setView("bundles"))}>
+            Cancel
+          </Button>
         </div>
       </form>
     </div>

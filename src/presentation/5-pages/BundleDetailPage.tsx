@@ -30,9 +30,7 @@ const BundleDetailPage: FC = () => {
         icon="🔍"
         title="Bundle not found"
         description="This bundle may have been deleted."
-        action={
-          <Button onClick={() => dispatch(setView("bundles"))}>Back to Bundles</Button>
-        }
+        action={<Button onClick={() => dispatch(setView("bundles"))}>Back to Bundles</Button>}
       />
     );
   }
@@ -42,7 +40,6 @@ const BundleDetailPage: FC = () => {
 
   return (
     <div className="space-y-6 max-w-3xl">
-
       {/* Header */}
       <div className="flex items-start gap-4">
         <button
@@ -102,7 +99,10 @@ const BundleDetailPage: FC = () => {
             <Button
               size="sm"
               variant="secondary"
-              onClick={() => { setShowAddItem(true); setShowAddCost(false); }}
+              onClick={() => {
+                setShowAddItem(true);
+                setShowAddCost(false);
+              }}
             >
               + Add Item
             </Button>
@@ -146,7 +146,10 @@ const BundleDetailPage: FC = () => {
             <Button
               size="sm"
               variant="secondary"
-              onClick={() => { setShowAddCost(true); setShowAddItem(false); }}
+              onClick={() => {
+                setShowAddCost(true);
+                setShowAddItem(false);
+              }}
             >
               + Add Cost
             </Button>

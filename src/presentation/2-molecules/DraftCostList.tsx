@@ -1,5 +1,5 @@
 import { FC, memo, useState } from "react";
-import type { DraftCost, ExtraCostCategory, CostCategoryOption } from "../../types";
+import type { DraftCost, CostCategoryOption, AdditionalCostCategory } from "../../types";
 import Button from "../1-atoms/Button";
 import Input from "../1-atoms/Input";
 import Select from "../1-atoms/Select";
@@ -20,7 +20,7 @@ interface Props {
 const DraftCostList: FC<Props> = ({ costs, totalInvested, onAdd, onRemove }) => {
   const [showForm, setShowForm] = useState(false);
   const [label, setLabel] = useState("");
-  const [category, setCategory] = useState<ExtraCostCategory>("car_boot_entry");
+  const [category, setCategory] = useState<AdditionalCostCategory>("car_boot_entry");
   const [amount, setAmount] = useState("");
   const [costError, setCostError] = useState("");
 
@@ -34,7 +34,11 @@ const DraftCostList: FC<Props> = ({ costs, totalInvested, onAdd, onRemove }) => 
     const autoLabel =
       label.trim() || COST_CATEGORIES.find((c) => c.value === category)?.label || "Extra cost";
     onAdd({ tempId: `${Date.now()}`, label: autoLabel, category, amount });
-    setLabel(""); setCategory("car_boot_entry"); setAmount(""); setCostError(""); setShowForm(false);
+    setLabel("");
+    setCategory("car_boot_entry");
+    setAmount("");
+    setCostError("");
+    setShowForm(false);
   };
 
   return (
@@ -91,12 +95,24 @@ const DraftCostList: FC<Props> = ({ costs, totalInvested, onAdd, onRemove }) => 
               value={category}
               options={COST_CATEGORIES.map((c) => ({ value: c.value, label: c.label }))}
               hint={selectedHint}
-              onChange={(e) => { setCategory(e.target.value as ExtraCostCategory); setLabel(""); setCostError(""); }}
+              onChange={(e) => {
+                setCategory(e.target.value as AdditionalCostCategory);
+                setLabel("");
+                setCostError("");
+              }}
             />
             <Input
-              label="Amount" type="number" step="0.01" min="0.01" placeholder="0.00" prefix="£"
+              label="Amount"
+              type="number"
+              step="0.01"
+              min="0.01"
+              placeholder="0.00"
+              prefix="£"
               value={amount}
-              onChange={(e) => { setAmount(e.target.value); setCostError(""); }}
+              onChange={(e) => {
+                setAmount(e.target.value);
+                setCostError("");
+              }}
               error={costError}
             />
           </div>
@@ -107,8 +123,20 @@ const DraftCostList: FC<Props> = ({ costs, totalInvested, onAdd, onRemove }) => 
             onChange={(e) => setLabel(e.target.value)}
           />
           <div className="flex gap-2">
-            <Button type="button" size="sm" variant="secondary" onClick={handleAdd}>Add Cost</Button>
-            <Button type="button" size="sm" variant="ghost" onClick={() => { setShowForm(false); setCostError(""); }}>Cancel</Button>
+            <Button type="button" size="sm" variant="secondary" onClick={handleAdd}>
+              Add Cost
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              variant="ghost"
+              onClick={() => {
+                setShowForm(false);
+                setCostError("");
+              }}
+            >
+              Cancel
+            </Button>
           </div>
         </div>
       )}

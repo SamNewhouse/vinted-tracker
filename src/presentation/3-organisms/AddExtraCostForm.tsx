@@ -2,7 +2,9 @@
 import { FC, memo, useState } from "react";
 import { useAppDispatch } from "../../store/hooks";
 import { addExtraCost } from "../../store/trackerSlice";
-import type { CostCategoryOption, ExtraCostCategory } from "../../types";
+import type {
+  AdditionalCostCategory, CostCategoryOption, 
+ } from "../../types";
 import Input from "../1-atoms/Input";
 import Button from "../1-atoms/Button";
 import Select from "../1-atoms/Select";
@@ -21,7 +23,7 @@ const COST_CATEGORIES: CostCategoryOption[] = [
 const AddExtraCostForm: FC<Props> = ({ bundleId, onClose }) => {
   const dispatch = useAppDispatch();
   const [label, setLabel] = useState("");
-  const [category, setCategory] = useState<ExtraCostCategory>("car_boot_entry");
+  const [category, setCategory] = useState<AdditionalCostCategory>("car_boot_entry");
   const [amount, setAmount] = useState("");
   const [amountError, setAmountError] = useState("");
 
@@ -62,7 +64,7 @@ const AddExtraCostForm: FC<Props> = ({ bundleId, onClose }) => {
           options={COST_CATEGORIES.map((c) => ({ value: c.value, label: c.label }))}
           hint={selectedHint}
           onChange={(e) => {
-            setCategory(e.target.value as ExtraCostCategory);
+            setCategory(e.target.value as AdditionalCostCategory);
             setLabel("");
           }}
         />

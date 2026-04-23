@@ -1,4 +1,14 @@
-import { SaleCosts } from "../types";
+import { AdditionalCostCategory, SaleCosts } from "../types";
+
+export const COST_CATEGORY_LABELS: Record<AdditionalCostCategory, string> = {
+  postage: "Postage",
+  packaging: "Packaging",
+  car_boot_entry: "Car Boot Entry",
+  platform_fee: "Platform Fee",
+  repair: "Repair / Alteration",
+  cleaning: "Cleaning",
+  other: "Other",
+};
 
 export function calcMinSalePrice(
   allocatedCost: number,

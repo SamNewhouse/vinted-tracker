@@ -7,21 +7,28 @@ export type Data = {
 
 export type ItemStatus = "unlisted" | "listed" | "sold" | "returned" | "unsellable";
 
-export type ExtraCostCategory = "postage" | "car_boot_entry" | "other";
-
 export type ViewMode = "dashboard" | "bundles" | "bundle-detail" | "add-bundle" | "analytics";
 
 export type SortField = "date" | "profit" | "spend" | "revenue" | "name";
 export type SortDirection = "asc" | "desc";
 
+export type AdditionalCostCategory =
+  | "postage"
+  | "packaging"
+  | "car_boot_entry"
+  | "platform_fee"
+  | "repair"
+  | "cleaning"
+  | "other";
+
 // ─── Cost structures ──────────────────────────────────────────────────────────
 
 export interface ExtraCost {
   id: string;
-  label: string;
-  category: ExtraCostCategory;
-  amount: number;
-  bundleId?: string;
+  label: string; // e.g. "Car boot entry – Wigan", "Royal Mail 2nd class"
+  category: AdditionalCostCategory | string;
+  amount: number; // £
+  bundleId?: string; // optional: scope to a specific bundle
 }
 
 /**
@@ -116,7 +123,7 @@ export interface FilterState {
 export interface DraftCost {
   tempId: string;
   label: string;
-  category: ExtraCostCategory;
+  category: AdditionalCostCategory;
   amount: string; // string while in the input, converted to number on submit
 }
 
@@ -124,7 +131,7 @@ export interface DraftCost {
  * Shape of a single category option used in cost dropdowns.
  */
 export interface CostCategoryOption {
-  value: ExtraCostCategory;
+  value: AdditionalCostCategory;
   label: string;
   hint: string;
 }

@@ -34,7 +34,6 @@ const AddItemForm: FC<Props> = ({ bundleId, onClose }) => {
           listedAt: undefined,
           soldAt: undefined,
           salePrice: undefined,
-          platformFee: undefined,
         },
       }),
     );
