@@ -1,7 +1,4 @@
-/**
- * types/index.ts
- * Central TypeScript types for the Vinted Finance Tracker.
- */
+// ─── Primitives ───────────────────────────────────────────────────────────────
 
 export type Data = {
   message?: string;
@@ -10,59 +7,81 @@ export type Data = {
 
 export type ItemStatus = "unlisted" | "listed" | "sold" | "returned" | "unsellable";
 
-export type ExtraCostCategory =
-  | "postage_in"
-  | "postage_out"
-  | "car_boot_entry"
-  | "platform_fee"
-  | "packaging"
-  | "other";
+export type ExtraCostCategory = "postage" | "car_boot_entry" | "other";
+
+export type ViewMode = "dashboard" | "bundles" | "bundle-detail" | "add-bundle" | "analytics";
+
+export type SortField = "date" | "profit" | "spend" | "revenue" | "name";
+export type SortDirection = "asc" | "desc";
+
+// ─── Cost structures ──────────────────────────────────────────────────────────
 
 export interface ExtraCost {
   id: string;
   label: string;
   category: ExtraCostCategory;
-  amount: number; // in £
-  bundleId?: string; // if attached to a specific bundle
+  amount: number;
+  bundleId?: string;
 }
+
+/**
+ * Costs incurred at the point of sale for a single item.
+ * These are NOT split across the bundle — they belong to the item only.
+ */
+export interface SaleCosts {
+  postageOut: number; // shipping label cost
+  packaging: number; // box, bag, bubble wrap etc.
+  platformFee: number; // Vinted / eBay / Depop fee
+  otherCosts: number; // anything else at point of sale
+}
+
+// ─── Core domain ──────────────────────────────────────────────────────────────
 
 export interface BundleItem {
   id: string;
   name: string;
   description?: string;
-  allocatedCost: number;   // auto-calculated: bundle purchase cost / item count
-  extraCostsShare: number; // auto-calculated: proportional share of bundle's extra costs
-  salePrice?: number;      // actual sale price if sold
+  /** purchaseCost / itemCount — auto-calculated, never manually set */
+  allocatedCost: number;
+  /** bundle extraCosts total / itemCount — auto-calculated, never manually set */
+  extraCostsShare: number;
+  /** Actual price the buyer paid */
+  salePrice?: number;
+  /** Costs incurred when selling this specific item */
+  saleCosts?: SaleCosts;
   status: ItemStatus;
-  listedAt?: string;       // ISO date string
-  soldAt?: string;         // ISO date string
-  platformFee?: number;    // e.g. Vinted's 5% buyer protection (paid by buyer, but tracked)
+  listedAt?: string; // ISO date string
+  soldAt?: string; // ISO date string
   notes?: string;
 }
 
 export interface Bundle {
   id: string;
   name: string;
-  purchaseDate: string;    // ISO date string
-  purchaseCost: number;    // total paid for the bundle £
-  source: string;          // e.g. "Car boot - Wigan", "Vinted", "Charity shop"
+  purchaseDate: string; // ISO date string
+  purchaseCost: number; // total paid for the whole bundle £
+  source: string; // e.g. "Car boot – Wigan", "Vinted", "Charity shop"
   items: BundleItem[];
+  /** Upfront costs split equally across all items (postage in, entry fees etc.) */
   extraCosts: ExtraCost[];
   notes?: string;
   createdAt: string;
   updatedAt: string;
 }
 
-// Derived/computed — never stored, always calculated
+export type BundleStatus = "success" | "warning" | "error" | "neutral" | "info" | "profit" | "loss";
+
+// ─── Derived / computed (never stored in Redux) ───────────────────────────────
+
 export interface BundleSummary {
   bundleId: string;
-  totalInvested: number;   // purchaseCost + all extraCosts
-  totalRevenue: number;    // sum of soldItems salePrice
-  totalProfit: number;     // totalRevenue - totalInvested
-  profitMargin: number;    // %
+  totalInvested: number; // purchaseCost + all extraCosts
+  totalRevenue: number; // sum of sold items' salePrices
+  totalProfit: number; // totalRevenue - totalInvested - all saleCosts
+  profitMargin: number; // %
   soldItemCount: number;
   unsoldItemCount: number;
-  averageMinSalePrice: number;
+  averageMinSalePrice: number; // per-item cost * 1.15
   isBreakEven: boolean;
   isProfitable: boolean;
 }
@@ -81,14 +100,31 @@ export interface DashboardStats {
   worstPerformingBundle?: string;
 }
 
-export type ViewMode = "dashboard" | "bundles" | "bundle-detail" | "add-bundle" | "analytics";
-
-export type SortField = "date" | "profit" | "spend" | "revenue" | "name";
-export type SortDirection = "asc" | "desc";
+// ─── UI state ─────────────────────────────────────────────────────────────────
 
 export interface FilterState {
   search: string;
   status: ItemStatus | "all";
   sortField: SortField;
   sortDirection: SortDirection;
+}
+
+/**
+ * Local draft used only inside AddBundleForm before the bundle exists in Redux.
+ * Not persisted anywhere.
+ */
+export interface DraftCost {
+  tempId: string;
+  label: string;
+  category: ExtraCostCategory;
+  amount: string; // string while in the input, converted to number on submit
+}
+
+/**
+ * Shape of a single category option used in cost dropdowns.
+ */
+export interface CostCategoryOption {
+  value: ExtraCostCategory;
+  label: string;
+  hint: string;
 }

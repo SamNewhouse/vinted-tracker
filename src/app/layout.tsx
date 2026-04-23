@@ -2,6 +2,7 @@ import { Viewport } from "next";
 import "../styles/globals.css";
 import { ReactNode } from "react";
 import { Inter, Space_Grotesk } from "next/font/google";
+import ReduxProvider from "../presentation/3-organisms/ReduxProvider";
 
 export const viewport: Viewport = {
   width: "device-width",
@@ -12,13 +13,14 @@ export const viewport: Viewport = {
 
 const inter = Inter({
   subsets: ["latin"],
-  weight: ["400", "700"],
+  weight: ["400", "500", "700"],
   variable: "--font-body",
   display: "swap",
 });
+
 const spaceGrotesk = Space_Grotesk({
   subsets: ["latin"],
-  weight: ["500", "700"],
+  weight: ["500", "600", "700"],
   variable: "--font-heading",
   display: "swap",
 });
@@ -26,7 +28,9 @@ const spaceGrotesk = Space_Grotesk({
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en" className={`${inter.variable} ${spaceGrotesk.variable}`}>
-      <body>{children}</body>
+      <body>
+        <ReduxProvider>{children}</ReduxProvider>
+      </body>
     </html>
   );
 }

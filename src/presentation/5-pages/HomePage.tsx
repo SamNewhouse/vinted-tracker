@@ -1,35 +1,43 @@
-import { NextPage } from "next";
-import Url from "../1-atoms/Url";
-import BaseLayout from "../4-layouts/BaseLayout";
+"use client";
+import { FC, memo } from "react";
+import { useAppSelector } from "../../store/hooks";
+import DashboardLayout from "../4-layouts/DashboardLayout";
+import DashboardPage from "./DashboardPage";
+import BundlesPage from "./BundlesPage";
+import BundleDetailPage from "./BundleDetailPage";
+import AddBundleForm from "../3-organisms/AddBundleForm";
 
-interface Props {
-  //
-}
+const HomePage: FC = () => {
+  const view = useAppSelector((s) => s.tracker.view);
 
-const HomePage: NextPage<Props> = () => {
-  return (
-    <>
-      <BaseLayout className="home">
-        <div className="flex flex-col justify-center items-center h-screen">
-          <div className="flex flex-col w-100 max-w-md space-y-3">
-            <h1 className="font-serif text-6xl lg:text-8xl">
-              NextJs Typescript Tailwind Boilerplate
-            </h1>
-            <h2 className="font-sans text-xl lg:text-2xl">by Sam Newhouse</h2>
-            <div className="flex flex-row space-x-2">
-              <Url href="https://github.com/SamNewhouse/create-nttb" className="text-md lg:text-lg">
-                <span>github</span>
-              </Url>
-              <Url href="https://www.npmjs.com/package/create-nttb" className="text-md lg:text-lg">
-                <span>nmpjs</span>
-              </Url>
-            </div>
+  const renderView = () => {
+    switch (view) {
+      case "dashboard":
+        return <DashboardPage />;
+      case "bundles":
+        return <BundlesPage />;
+      case "bundle-detail":
+        return <BundleDetailPage />;
+      case "add-bundle":
+        return <AddBundleForm />;
+      case "analytics":
+        return (
+          <div className="flex flex-col items-center justify-center py-20 text-center">
+            <span className="text-5xl mb-4">📊</span>
+            <h2 className="font-heading font-bold text-xl text-slate-900 dark:text-white mb-2">
+              Analytics coming next
+            </h2>
+            <p className="text-sm text-slate-500 dark:text-slate-400">
+              Charts and trend data will appear here.
+            </p>
           </div>
-          <div></div>
-        </div>
-      </BaseLayout>
-    </>
-  );
+        );
+      default:
+        return <DashboardPage />;
+    }
+  };
+
+  return <DashboardLayout>{renderView()}</DashboardLayout>;
 };
 
-export default HomePage;
+export default memo(HomePage);

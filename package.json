@@ -22,7 +22,8 @@
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "react-redux": "^9.2.0",
-    "redux-persist": "^6.0.0"
+    "redux-persist": "^6.0.0",
+    "uuid": "^14.0.0"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "4.2.1",
@@ -31,6 +32,7 @@
     "@types/react": "19.2.8",
     "@types/react-dom": "19.2.3",
     "@types/redux-persist": "^4.0.0",
+    "@types/uuid": "^10.0.0",
     "jest": "30.2.0",
     "prettier": "3.8.2",
     "tailwindcss": "4.2.1",
