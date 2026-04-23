@@ -1,9 +1,8 @@
 "use client";
-import { FC, memo, useEffect, useRef } from "react";
+import { FC, memo} from "react";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import { selectFilteredItems } from "../../store/selectors";
 import { setFilter, clearFilters, setView, setActiveBundleId } from "../../store/trackerSlice";
-import { markItemStatus } from "../../store/trackerSlice";
 import { deleteItem } from "../../store/trackerSlice";
 import EmptyState from "../1-atoms/EmptyState";
 import Button from "../1-atoms/Button";
@@ -23,12 +22,6 @@ const ItemsPage: FC = () => {
 
   const [soldItem, setSoldItem] = useState<Item | null>(null);
   const [editItem, setEditItem] = useState<Item | null>(null);
-
-  const hasCleared = useRef(false);
-
-  useEffect(() => {
-    dispatch(clearFilters());
-  }, []);
 
   return (
     <div className="space-y-5 max-w-5xl">
