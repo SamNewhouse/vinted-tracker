@@ -23,12 +23,6 @@ const ItemsPage: FC = () => {
   const [soldItem, setSoldItem] = useState<Item | null>(null);
   const [editItem, setEditItem] = useState<Item | null>(null);
 
-  console.log("=== ItemsPage Debug ===");
-  console.log("filters:", JSON.stringify(filters, null, 2));
-  console.log("all items in store:", useAppSelector(s => s.tracker.items).length);
-  console.log("filtered items:", items.length);
-  console.log("raw localStorage:", localStorage.getItem("persist:vinted-tracker-root"));
-
   return (
     <div className="space-y-5 max-w-5xl">
       {/* Header */}
