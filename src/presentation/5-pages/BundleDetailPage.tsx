@@ -20,6 +20,7 @@ import ExtraCostRow from "../2-molecules/ExtraCostRow";
 import AddItemForm from "../3-organisms/AddItemForm";
 import AddExtraCostForm from "../3-organisms/AddExtraCostForm";
 import MarkSoldModal from "../3-organisms/MarkSoldModal";
+import EditItemModal from "../3-organisms/EditItemModal";
 
 const BundleDetailPage: FC = () => {
   const dispatch = useAppDispatch();
@@ -28,6 +29,7 @@ const BundleDetailPage: FC = () => {
   const [showAddItem, setShowAddItem] = useState(false);
   const [showAddCost, setShowAddCost] = useState(false);
   const [soldItem, setSoldItem] = useState<Item | null>(null);
+  const [editItem, setEditItem] = useState<Item | null>(null);
 
   if (!bundle) {
     return (
@@ -143,7 +145,10 @@ const BundleDetailPage: FC = () => {
                     const found = items.find((i) => i.id === id);
                     if (found) setSoldItem(found);
                   }}
-                  onEdit={() => {}}
+                  onEdit={(id) => {
+                    const found = items.find((i) => i.id === id);
+                    if (found) setEditItem(found);
+                  }}
                   onDelete={(id) => dispatch(deleteItem(id))}
                 />
               ))}
@@ -213,6 +218,7 @@ const BundleDetailPage: FC = () => {
       )}
 
       {soldItem && <MarkSoldModal item={soldItem} onClose={() => setSoldItem(null)} />}
+      {editItem && <EditItemModal item={editItem} onClose={() => setEditItem(null)} />}
     </div>
   );
 };
