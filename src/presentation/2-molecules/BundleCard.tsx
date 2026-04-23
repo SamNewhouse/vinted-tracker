@@ -1,4 +1,5 @@
 import { FC, memo } from "react";
+import { useAppSelector } from "../../store/hooks";
 import type { Bundle } from "../../types";
 import { selectBundleSummary } from "../../store/selectors";
 import { formatCurrency, formatPercent } from "../../utils/finance";
@@ -15,10 +16,9 @@ interface Props {
 }
 
 const BundleCard: FC<Props> = ({ bundle, onView, onDelete }) => {
-  const summary = selectBundleSummary(bundle);
-  const soldCount = summary.soldItemCount;
-  const totalCount = bundle.items.length;
-  const progress = totalCount > 0 ? (soldCount / totalCount) * 100 : 0;
+  const allItems = useAppSelector((state) => state.tracker.items);
+  const summary = selectBundleSummary(bundle, allItems);
+  const progress = summary.itemCount > 0 ? (summary.soldItemCount / summary.itemCount) * 100 : 0;
 
   return (
     <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 hover:shadow-md transition-shadow">
@@ -48,7 +48,7 @@ const BundleCard: FC<Props> = ({ bundle, onView, onDelete }) => {
 
       <div className="flex items-center justify-between mb-3">
         <span className="text-xs text-slate-500 dark:text-slate-400">
-          {soldCount}/{totalCount} items sold
+          {summary.soldItemCount}/{summary.itemCount} items sold
           {summary.profitMargin !== 0 && (
             <>
               {" "}

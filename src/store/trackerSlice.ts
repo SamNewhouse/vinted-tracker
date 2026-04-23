@@ -54,7 +54,6 @@ const trackerSlice = createSlice({
       const itemCount = draftItems.length
       const perItemPurchaseCost = itemCount > 0 ? bundle.purchaseCost / itemCount : 0
 
-      // Create the bundle
       state.bundles.push({
         ...bundle,
         id: bundleId,
@@ -63,7 +62,6 @@ const trackerSlice = createSlice({
         updatedAt: now,
       })
 
-      // Create each item — denormalise bundle context at write time
       for (const draft of draftItems) {
         state.items.push({
           id: uuidv4(),
@@ -77,9 +75,9 @@ const trackerSlice = createSlice({
           allocatedPurchaseCost: perItemPurchaseCost,
           allocatedExtraCostShare: 0,
           targetMarginPercent: 15,
-          saleCosts: [],
           breakEvenPrice: perItemPurchaseCost,
           minSalePrice: perItemPurchaseCost * 1.15,
+          saleCosts: [],
           status: "unlisted",
           createdAt: now,
           updatedAt: now,
@@ -98,7 +96,6 @@ const trackerSlice = createSlice({
       if (!bundle) return
       Object.assign(bundle, action.payload.changes, { updatedAt: new Date().toISOString() })
 
-      // Sync denormalised fields onto items if name/source/date changed
       const { name, source, purchaseDate } = action.payload.changes
       if (name !== undefined || source !== undefined || purchaseDate !== undefined) {
         for (const item of state.items.filter((i) => i.bundleId === bundle.id)) {
@@ -137,7 +134,6 @@ const trackerSlice = createSlice({
       const bundleItems = state.items.filter((i) => i.bundleId === bundle.id)
       const newCount = bundleItems.length + 1
 
-      // Recalculate allocations across existing items first
       const perItemPurchaseCost = bundle.purchaseCost / newCount
       const sharedExtraCosts = bundle.extraCosts.reduce((s, c) => s + c.amount, 0)
       const perItemExtraShare = sharedExtraCosts / newCount
@@ -150,7 +146,6 @@ const trackerSlice = createSlice({
         item.updatedAt = now
       }
 
-      // Add the new item
       state.items.push({
         id: uuidv4(),
         bundleId: bundle.id,
@@ -163,9 +158,9 @@ const trackerSlice = createSlice({
         allocatedPurchaseCost: perItemPurchaseCost,
         allocatedExtraCostShare: perItemExtraShare,
         targetMarginPercent: 15,
-        saleCosts: [],
         breakEvenPrice: perItemPurchaseCost + perItemExtraShare,
         minSalePrice: (perItemPurchaseCost + perItemExtraShare) * 1.15,
+        saleCosts: [],
         status: "unlisted",
         createdAt: now,
         updatedAt: now,
@@ -184,7 +179,6 @@ const trackerSlice = createSlice({
       const item = state.items.find((i) => i.id === action.payload.itemId)
       if (!item) return
       Object.assign(item, action.payload.changes, { updatedAt: new Date().toISOString() })
-      // Recalculate minSalePrice if margin changed
       if (action.payload.changes.targetMarginPercent !== undefined) {
         item.minSalePrice = item.breakEvenPrice * (1 + item.targetMarginPercent / 100)
       }
@@ -227,7 +221,6 @@ const trackerSlice = createSlice({
       if (!item) return
       item.status = action.payload.status
       if (action.payload.status !== "sold") {
-        // Revert — clear sale data
         item.salePrice = undefined
         item.soldAt = undefined
         item.saleCosts = []
@@ -278,8 +271,6 @@ const trackerSlice = createSlice({
     },
   },
 })
-
-// ── Pure helper — mutates items in-place inside Immer ────────
 
 function recalculateAllocations(bundle: Bundle, allItems: Item[]): void {
   const bundleItems = allItems.filter((i) => i.bundleId === bundle.id)

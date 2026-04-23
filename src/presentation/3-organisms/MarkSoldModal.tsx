@@ -2,11 +2,8 @@
 import { FC, memo, useState } from "react"
 import { useAppDispatch } from "../../store/hooks"
 import { markItemSold } from "../../store/trackerSlice"
-import {
-  calcItemProfit,
-  formatCurrency,
-} from "../../utils/finance"
-import type { Item, CostCategory } from "../../types"
+import { calcItemProfit, formatCurrency } from "../../utils/finance"
+import type { Item, CostCategory, ItemSaleCost } from "../../types"
 import Button from "../1-atoms/Button"
 import Input from "../1-atoms/Input"
 import CostCell from "../1-atoms/CostCell"
@@ -20,21 +17,25 @@ interface Props {
 
 type DraftSaleCost = { tempId: string; category: CostCategory; label: string; amount: number }
 
+// Converts draft costs to the shape calcItemProfit expects (id not needed for calc)
+function toSaleCosts(drafts: DraftSaleCost[]): ItemSaleCost[] {
+  return drafts.map((d) => ({ id: d.tempId, category: d.category, label: d.label, amount: d.amount }))
+}
+
 const MarkSoldModal: FC<Props> = ({ item, onClose }) => {
   const dispatch = useAppDispatch()
   const [salePrice, setSalePrice] = useState("")
   const [salePriceError, setSalePriceError] = useState("")
   const [draftCosts, setDraftCosts] = useState<DraftSaleCost[]>([
-    { tempId: "postage_out", category: "postage", label: "Postage Out", amount: 0 }
+    { tempId: "postage_out", category: "postage", label: "Postage Out", amount: 0 },
   ])
 
   const parsedPrice = Number(salePrice)
-  const totalSaleCosts = draftCosts.reduce((s, c) => s + c.amount, 0)
   const activeCosts = draftCosts.filter((c) => c.amount > 0)
 
   const previewProfit =
     !isNaN(parsedPrice) && parsedPrice > 0
-      ? calcItemProfit(parsedPrice, item.allocatedPurchaseCost, item.allocatedExtraCostShare, activeCosts)
+      ? calcItemProfit(parsedPrice, item.allocatedPurchaseCost, item.allocatedExtraCostShare, toSaleCosts(activeCosts))
       : null
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -56,7 +57,6 @@ const MarkSoldModal: FC<Props> = ({ item, onClose }) => {
   return (
     <Modal title={`Mark "${item.name}" as Sold`} onClose={onClose}>
       <form onSubmit={handleSubmit} className="space-y-4">
-        {/* Pricing reference */}
         <div className="grid grid-cols-2 gap-3">
           <CostCell label="Break-even" value={formatCurrency(item.breakEvenPrice)} colour="muted" />
           <CostCell label="Min. sale (15%)" value={formatCurrency(item.minSalePrice)} colour="warning" />
@@ -74,7 +74,6 @@ const MarkSoldModal: FC<Props> = ({ item, onClose }) => {
           error={salePriceError}
         />
 
-        {/* Sale costs */}
         <div className="space-y-2">
           <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
             Sale Costs
@@ -103,7 +102,6 @@ const MarkSoldModal: FC<Props> = ({ item, onClose }) => {
           ))}
         </div>
 
-        {/* Profit preview */}
         {previewProfit !== null && (
           <div className="flex items-center justify-between rounded-lg bg-slate-50 dark:bg-slate-800/50 px-4 py-3">
             <span className="text-sm text-slate-500 dark:text-slate-400">Net profit</span>

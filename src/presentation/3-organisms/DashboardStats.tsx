@@ -9,7 +9,6 @@ const DashboardStatsOrganism: FC = () => {
   const stats = useAppSelector(selectDashboardStats);
 
   const profitDirection = stats.totalProfit > 0 ? "up" : stats.totalProfit < 0 ? "down" : "neutral";
-
   const revenueDirection = stats.totalRevenue > 0 ? "up" : "neutral";
 
   return (
@@ -33,19 +32,19 @@ const DashboardStatsOrganism: FC = () => {
         value={formatCurrency(stats.totalProfit)}
         subtext={
           stats.totalSpend > 0
-            ? `${formatPercent(stats.overallProfitMargin, true)} overall margin`
+            ? `${formatPercent(stats.overallROI, true)} overall ROI`
             : undefined
         }
         trend={profitDirection}
         trendValue={
-          stats.totalSpend > 0 ? formatPercent(stats.overallProfitMargin, true) : undefined
+          stats.totalSpend > 0 ? formatPercent(stats.overallROI, true) : undefined
         }
         icon={<span className="text-base">📈</span>}
         highlight
       />
       <StatCard
         label="Active Listings"
-        value={String(stats.activeListings)}
+        value={String(stats.listedItems)}
         subtext={`${stats.unlistedItems} unlisted · ${stats.totalItems} total`}
         icon={<span className="text-base">🏷️</span>}
       />

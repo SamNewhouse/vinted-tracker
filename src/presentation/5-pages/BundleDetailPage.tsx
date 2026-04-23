@@ -1,10 +1,10 @@
 "use client";
 import { FC, memo, useState } from "react";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
-import { selectActiveBundle, selectBundleSummary } from "../../store/selectors";
-import { deleteItem, deleteExtraCost, setView } from "../../store/trackerSlice";
+import { selectActiveBundle, selectActiveBundleItems, selectBundleSummary } from "../../store/selectors";
+import { deleteItem, deleteBundleExtraCost, setView } from "../../store/trackerSlice";
 import { formatCurrency, formatPercent } from "../../utils/finance";
-import type { BundleItem, ExtraCost } from "../../types";
+import type { Item, BundleExtraCost } from "../../types";
 import Button from "../1-atoms/Button";
 import Badge from "../1-atoms/Badge";
 import CostCell from "../1-atoms/CostCell";
@@ -20,9 +20,10 @@ import MarkSoldModal from "../3-organisms/MarkSoldModal";
 const BundleDetailPage: FC = () => {
   const dispatch = useAppDispatch();
   const bundle = useAppSelector(selectActiveBundle);
+  const items = useAppSelector(selectActiveBundleItems);
   const [showAddItem, setShowAddItem] = useState(false);
   const [showAddCost, setShowAddCost] = useState(false);
-  const [soldItem, setSoldItem] = useState<BundleItem | null>(null);
+  const [soldItem, setSoldItem] = useState<Item | null>(null);
 
   if (!bundle) {
     return (
@@ -35,12 +36,10 @@ const BundleDetailPage: FC = () => {
     );
   }
 
-  const summary = selectBundleSummary(bundle);
+  const allItems = useAppSelector((state) => state.tracker.items);
+  const summary = selectBundleSummary(bundle, allItems);
 
-  // Split costs for display — purchase costs shown in the extra costs section,
-  // sale costs are pinned to items and shown inline on each item row
-  const purchaseExtraCosts = bundle.extraCosts.filter((c: ExtraCost) => c.timing === "purchase");
-  const totalExtraCosts = bundle.extraCosts.reduce((s: number, c: ExtraCost) => s + c.amount, 0);
+  const totalExtraCosts = bundle.extraCosts.reduce((s, c) => s + c.amount, 0);
 
   return (
     <div className="space-y-6 max-w-3xl">
@@ -98,15 +97,12 @@ const BundleDetailPage: FC = () => {
       <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
         <SectionHeader
           title="Items"
-          subtitle={`${summary.soldItemCount}/${bundle.items.length} sold · Min. sale = cost + 15% margin`}
+          subtitle={`${summary.soldItemCount}/${summary.itemCount} sold · Min. sale = cost + 15% margin`}
           action={
             <Button
               size="sm"
               variant="secondary"
-              onClick={() => {
-                setShowAddItem(true);
-                setShowAddCost(false);
-              }}
+              onClick={() => { setShowAddItem(true); setShowAddCost(false); }}
             >
               + Add Item
             </Button>
@@ -114,22 +110,21 @@ const BundleDetailPage: FC = () => {
         />
 
         <div className="px-5">
-          {bundle.items.length === 0 ? (
+          {items.length === 0 ? (
             <div className="py-10 text-center text-slate-400 dark:text-slate-500 text-sm">
               No items yet. Add items to start splitting costs.
             </div>
           ) : (
-            bundle.items.map((item: BundleItem) => (
+            items.map((item: Item) => (
               <ItemRow
                 key={item.id}
                 item={item}
-                bundleExtraCosts={bundle.extraCosts}
-                onMarkSold={(id: string) => {
-                  const found = bundle.items.find((i: BundleItem) => i.id === id);
+                onMarkSold={(id) => {
+                  const found = items.find((i) => i.id === id);
                   if (found) setSoldItem(found);
                 }}
                 onEdit={() => {}}
-                onDelete={(id: string) => dispatch(deleteItem({ bundleId: bundle.id, itemId: id }))}
+                onDelete={(id) => dispatch(deleteItem(id))}
               />
             ))
           )}
@@ -142,7 +137,7 @@ const BundleDetailPage: FC = () => {
         )}
       </div>
 
-      {/* Purchase extra costs section — sale costs live on individual items */}
+      {/* Purchase extra costs section */}
       <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
         <SectionHeader
           title="Purchase Costs"
@@ -151,10 +146,7 @@ const BundleDetailPage: FC = () => {
             <Button
               size="sm"
               variant="secondary"
-              onClick={() => {
-                setShowAddCost(true);
-                setShowAddItem(false);
-              }}
+              onClick={() => { setShowAddCost(true); setShowAddItem(false); }}
             >
               + Add Cost
             </Button>
@@ -162,18 +154,16 @@ const BundleDetailPage: FC = () => {
         />
 
         <div className="px-5">
-          {purchaseExtraCosts.length === 0 ? (
+          {bundle.extraCosts.length === 0 ? (
             <div className="py-10 text-center text-slate-400 dark:text-slate-500 text-sm">
               No purchase costs yet.
             </div>
           ) : (
-            purchaseExtraCosts.map((cost: ExtraCost) => (
+            bundle.extraCosts.map((cost: BundleExtraCost) => (
               <ExtraCostRow
                 key={cost.id}
                 cost={cost}
-                onDelete={(id: string) =>
-                  dispatch(deleteExtraCost({ bundleId: bundle.id, costId: id }))
-                }
+                onDelete={(id) => dispatch(deleteBundleExtraCost({ bundleId: bundle.id, costId: id }))}
               />
             ))
           )}
@@ -196,14 +186,8 @@ const BundleDetailPage: FC = () => {
         </div>
       )}
 
-      {/* Mark sold modal — passes bundle's full cost array for pre-fill */}
       {soldItem && (
-        <MarkSoldModal
-          bundleId={bundle.id}
-          item={soldItem}
-          bundleExtraCosts={bundle.extraCosts}
-          onClose={() => setSoldItem(null)}
-        />
+        <MarkSoldModal item={soldItem} onClose={() => setSoldItem(null)} />
       )}
     </div>
   );

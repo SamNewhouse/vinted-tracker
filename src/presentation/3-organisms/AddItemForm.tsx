@@ -26,15 +26,9 @@ const AddItemForm: FC<Props> = ({ bundleId, onClose }) => {
     dispatch(
       addItem({
         bundleId,
-        item: {
-          name: name.trim(),
-          description: description.trim() || undefined,
-          notes: notes.trim() || undefined,
-          status: "unlisted",
-          listedAt: undefined,
-          soldAt: undefined,
-          salePrice: undefined,
-        },
+        name: name.trim(),
+        description: description.trim() || undefined,
+        notes: notes.trim() || undefined,
       }),
     );
     onClose();
@@ -66,12 +60,8 @@ const AddItemForm: FC<Props> = ({ bundleId, onClose }) => {
           onChange={(e) => setNotes(e.target.value)}
         />
         <div className="flex gap-2 pt-1">
-          <Button type="submit" size="sm">
-            Add Item
-          </Button>
-          <Button type="button" size="sm" variant="ghost" onClick={onClose}>
-            Cancel
-          </Button>
+          <Button type="submit" size="sm">Add Item</Button>
+          <Button type="button" size="sm" variant="ghost" onClick={onClose}>Cancel</Button>
         </div>
       </form>
     </div>
