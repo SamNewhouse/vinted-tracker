@@ -279,9 +279,12 @@ const trackerSlice = createSlice({
     },
   },
   extraReducers: (builder) => {
-    builder.addCase(REHYDRATE, (state, action: any) => {
-      if (action.key === "vinted-tracker-root") {
-        state.filters = initialState.filters;
+    builder.addCase(REHYDRATE, (_state, action: any) => {
+      if (action.key === "vinted-tracker-root" && action.payload) {
+        return {
+          ...action.payload.tracker,
+          filters: initialState.filters,
+        };
       }
     });
   },
