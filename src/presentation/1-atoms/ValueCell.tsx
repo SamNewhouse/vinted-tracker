@@ -1,9 +1,10 @@
 import { FC, memo, ReactNode } from "react";
 
 interface Props {
-  label?: string;   // <-- now optional
+  label?: string;
   value: string;
   colour?: "default" | "profit" | "loss" | "warning" | "muted";
+  className?: string;
 }
 
 const colourMap = {
@@ -14,8 +15,8 @@ const colourMap = {
   muted: "text-slate-500 dark:text-slate-400",
 };
 
-const ValueCell: FC<Props> = ({ label, value, colour = "default" }) => (
-  <div>
+const ValueCell: FC<Props> = ({ label, value, colour = "default", className }) => (
+  <div className={`${className}`}>
     {label && (
       <p className="text-xs text-slate-400 dark:text-slate-500 mb-0.5">{label}</p>
     )}

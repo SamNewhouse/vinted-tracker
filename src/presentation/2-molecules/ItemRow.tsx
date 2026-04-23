@@ -49,7 +49,7 @@ const ItemRow: FC<Props> = ({ item, onMarkSold, onEdit, onDelete }) => {
         )}
       </div>
 
-      <div className="grid grid-cols-3 gap-4 text-right shrink-0 w-[340px]">
+      <div className="grid grid-cols-3 gap-6 shrink-0 w-[280px]" style={{ justifyItems: "end" }}>
         <ValueCell
           value={formatCurrency(item.allocatedPurchaseCost + item.allocatedExtraCostShare)}
           colour="muted"
@@ -61,7 +61,7 @@ const ItemRow: FC<Props> = ({ item, onMarkSold, onEdit, onDelete }) => {
         />
       </div>
 
-      <div className="flex gap-1.5 shrink-0">
+      <div className="flex gap-1.5 shrink-0 w-[140px] justify-end">
         <Button
           size="sm"
           variant="secondary"
