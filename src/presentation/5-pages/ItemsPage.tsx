@@ -12,6 +12,7 @@ import {
 import EmptyState from "../1-atoms/EmptyState";
 import Button from "../1-atoms/Button";
 import Input from "../1-atoms/Input";
+import PageHeader from "../1-atoms/PageHeader";
 import Select from "../1-atoms/Select";
 import ItemRow from "../2-molecules/ItemRow";
 import type { Item, ItemStatus, SortDirection, SortField } from "../../types";
@@ -31,27 +32,23 @@ const ItemsPage: FC = () => {
   const [editItem, setEditItem] = useState<Item | null>(null);
 
   return (
-    <div className="space-y-5">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="font-heading font-bold text-2xl text-slate-900 dark:text-white">Items</h1>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
-            {items.length} item{items.length !== 1 ? "s" : ""}
-          </p>
-        </div>
-        <div className="flex gap-2">
-          <Button size="sm" variant="secondary" onClick={() => dispatch(setView("add-item"))}>
-            + Add Item
-          </Button>
-          <Button size="sm" variant="ghost" onClick={() => dispatch(clearFilters())}>
-            Clear filters
-          </Button>
-        </div>
-      </div>
+    <div className="space-y-6">
+      <PageHeader
+        title="Items"
+        subtitle={`${allItems.length} item${allItems.length !== 1 ? "s" : ""}`}
+        actions={
+          <>
+            <Button variant="secondary" onClick={() => dispatch(setView("add-item"))}>
+              + Add Item
+            </Button>
+            <Button variant="ghost" onClick={() => dispatch(clearFilters())}>
+              Clear filters
+            </Button>
+          </>
+        }
+      />
 
-      {/* Filter bar */}
-      <div className="flex flex-wrap gap-3">
+      <div className="flex flex-wrap gap-3 justify-between">
         <div className="flex-1 min-w-48">
           <Input
             placeholder="Search items..."
@@ -99,17 +96,12 @@ const ItemsPage: FC = () => {
         />
       </div>
 
-      {/* Table */}
       <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
-        {/* Column headers */}
-        <div className="flex items-center gap-4 px-5 py-2.5 border-b border-slate-100 dark:border-slate-800">
+        <div className="hidden sm:flex items-center gap-4 px-5 py-2.5 border-b border-slate-100 dark:border-slate-800">
           <span className="flex-1 text-xs font-semibold uppercase tracking-wider text-slate-400">
             Item
           </span>
           <div className="flex gap-4 shrink-0">
-            <span className="text-xs font-semibold uppercase tracking-wider text-slate-400 w-20 text-right">
-              Cost
-            </span>
             <span className="text-xs font-semibold uppercase tracking-wider text-slate-400 w-20 text-right">
               Min Sale
             </span>
@@ -117,7 +109,7 @@ const ItemsPage: FC = () => {
               Profit
             </span>
           </div>
-          <div className="w-[136px]" />
+          <div className="w-full md:w-[136px]" />
         </div>
 
         <div className="px-5">
@@ -137,6 +129,7 @@ const ItemsPage: FC = () => {
               <ItemRow
                 key={item.id}
                 item={item}
+                isOnly={items.length === 1}
                 showBundle
                 onMarkSold={setSoldItem}
                 onEdit={setEditItem}

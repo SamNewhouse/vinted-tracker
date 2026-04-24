@@ -10,10 +10,10 @@ interface Props {
 
 const navItems: { label: string; view: ViewMode; icon: string }[] = [
   { label: "Dashboard", view: "dashboard", icon: "◈" },
-  { label: "Bundles", view: "bundles", icon: "◻" },
   { label: "Items", view: "items", icon: "▤" },
+  { label: "Bundles", view: "bundles", icon: "◻" },
   { label: "Settings", view: "settings", icon: "⚙\uFE0E" },
-  { label: "Analytics", view: "analytics", icon: "◧" },
+  // { label: "Analytics", view: "analytics", icon: "◧" },
 ];
 
 const isDev = typeof window !== "undefined" && window.location.hostname === "localhost";
@@ -29,10 +29,10 @@ const DashboardLayout: FC<Props> = ({ children }) => {
     (currentView === "add-item" && view === "items");
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex overflow-x-hidden">
       {isDev && (
         <button
-          className="fixed bottom-0 right-0 p-3 m-3 bg-stone text-white rounded"
+          className="fixed bottom-0 right-0 p-3 m-3 bg-stone text-white rounded z-50"
           onClick={() => {
             localStorage.clear();
             location.reload();
@@ -41,6 +41,7 @@ const DashboardLayout: FC<Props> = ({ children }) => {
           Reset State
         </button>
       )}
+
       {/* Sidebar - desktop only */}
       <aside className="hidden md:flex flex-col w-56 shrink-0 border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 h-screen sticky top-0">
         {/* Logo */}
@@ -83,22 +84,24 @@ const DashboardLayout: FC<Props> = ({ children }) => {
         {/* CTAs */}
         <div className="p-3 border-t border-slate-100 dark:border-slate-800 space-y-2">
           <button
-            onClick={() => dispatch(setView("add-bundle"))}
-            className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg border-2 border-dashed border-slate-300 dark:border-slate-700 text-sm text-slate-500 dark:text-slate-400 hover:border-slate-900 dark:hover:border-white hover:text-slate-900 dark:hover:text-white transition-all"
-          >
-            + Add Bundle
-          </button>
-          <button
             onClick={() => dispatch(setView("add-item"))}
             className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg border-2 border-dashed border-slate-300 dark:border-slate-700 text-sm text-slate-500 dark:text-slate-400 hover:border-slate-900 dark:hover:border-white hover:text-slate-900 dark:hover:text-white transition-all"
           >
             + Add Item
           </button>
+          <button
+            onClick={() => dispatch(setView("add-bundle"))}
+            className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg border-2 border-dashed border-slate-300 dark:border-slate-700 text-sm text-slate-500 dark:text-slate-400 hover:border-slate-900 dark:hover:border-white hover:text-slate-900 dark:hover:text-white transition-all"
+          >
+            + Add Bundle
+          </button>
         </div>
       </aside>
 
       {/* Main */}
-      <main className="flex-1 min-w-0 p-5 pb-24 md:pb-8 md:p-8">{children}</main>
+      <main className="flex-1 min-w-0 w-full overflow-x-hidden p-5 pb-24 md:pb-8 md:p-8">
+        {children}
+      </main>
 
       {/* Bottom tab bar - mobile only */}
       <div className="fixed bottom-0 left-0 right-0 flex md:hidden border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 z-50">

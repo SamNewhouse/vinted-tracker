@@ -15,6 +15,7 @@ interface Props {
   onEdit: (item: Item) => void;
   onDelete: (itemId: string) => void;
   onBundleClick?: (bundleId: string) => void;
+  isOnly?: boolean;
 }
 
 const statusVariant = {
@@ -32,6 +33,7 @@ const ItemRow: FC<Props> = ({
   onEdit,
   onDelete,
   onBundleClick,
+  isOnly = false,
 }) => {
   const dispatch = useAppDispatch();
   const [expanded, setExpanded] = useState(false);
@@ -76,52 +78,50 @@ const ItemRow: FC<Props> = ({
 
   const undoSale = () => dispatch(markItemStatus({ itemId: item.id, status: "listed" }));
 
-  const handleBundleClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (item.bundleId) {
-      onBundleClick?.(item.bundleId);
-    }
-  };
+  const stopProp = (e: React.MouseEvent) => e.stopPropagation();
 
   return (
-    <div className="border-b border-slate-100 dark:border-slate-800 last:border-0">
+    <div className={!isOnly ? "border-b border-slate-100 dark:border-slate-800 last:border-0" : ""}>
       {/* Main row */}
-      <div className="flex items-center gap-4 py-3">
-        <button
-          onClick={() => setExpanded((v) => !v)}
-          className="flex-1 min-w-0 text-left group"
-          aria-expanded={expanded}
-        >
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-slate-400 dark:text-slate-500 transition-colors group-hover:text-slate-600 dark:group-hover:text-slate-300">
-              {expanded ? "▾" : "▸"}
-            </span>
+      <div
+        role="button"
+        aria-expanded={expanded}
+        onClick={() => setExpanded((v) => !v)}
+        className="flex items-center gap-3 py-3 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors -mx-5 px-5"
+      >
+        {/* Name + meta */}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 min-w-0">
             <span className="font-medium text-sm text-slate-900 dark:text-white truncate">
               {item.name}
             </span>
             <Badge label={item.status} status={statusVariant[item.status]} />
           </div>
-          {showBundle && item.bundleId && (
-            <span
-              onClick={handleBundleClick}
-              className="text-xs text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 mt-0.5 ml-4 cursor-pointer transition-colors"
-            >
-              {item.source} →
-            </span>
-          )}
-          {showBundle && !item.bundleId && (
-            <span className="text-xs text-slate-400 dark:text-slate-500 mt-0.5 ml-4">
-              Standalone
-            </span>
-          )}
+
+          {/* Mobile: cost info */}
+          <div className="flex items-center gap-3 mt-0.5 sm:hidden">
+            {!isInactive && (
+              <span className="text-xs tabular-nums text-amber-600 dark:text-amber-400">
+                Min {formatCurrency(item.minSalePrice)}
+              </span>
+            )}
+            {profit !== null && (
+              <span className="text-xs tabular-nums text-emerald-600 dark:text-emerald-400">
+                P&L {formatCurrency(profit)}
+              </span>
+            )}
+          </div>
+
+          {/* Desktop: description */}
           {item.description && (
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 truncate ml-4">
+            <p className="hidden sm:block text-xs text-slate-500 dark:text-slate-400 truncate">
               {item.description}
             </p>
           )}
-        </button>
+        </div>
 
-        <div className="flex gap-4 shrink-0">
+        {/* Value columns — desktop only */}
+        <div className="hidden sm:flex gap-4 shrink-0">
           <span
             className={`text-sm tabular-nums font-semibold w-20 text-right ${
               item.status === "sold"
@@ -136,7 +136,11 @@ const ItemRow: FC<Props> = ({
           </span>
         </div>
 
-        <div className="flex gap-1.5 shrink-0 flex-none justify-end">
+        {/* Actions */}
+        <div
+          onClick={stopProp}
+          className="flex gap-0.5 shrink-0 [&>button]:px-2 sm:[&>button]:px-3"
+        >
           <Button
             size="sm"
             variant="secondary"
@@ -162,24 +166,34 @@ const ItemRow: FC<Props> = ({
 
       {/* Expanded panel */}
       {expanded && (
-        <div className="ml-4 mb-3 rounded-lg bg-slate-50 dark:bg-slate-800/50 overflow-hidden">
-          <ItemRowEditableFields
-            item={item}
-            isInactive={isInactive}
-            onSaveName={saveName}
-            onSaveMargin={saveMargin}
-            onSaveListedPrice={saveListedPrice}
-            onSaveStatus={saveStatus}
-          />
-          <ItemRowPricingBreakdown
-            item={item}
-            isInactive={isInactive}
-            totalCost={totalCost}
-            totalSaleCosts={totalSaleCosts}
-            profit={profit}
-            roi={roi}
-            onUndoSale={undoSale}
-          />
+        <div className="mb-3 space-y-2">
+          {showBundle && item.bundleId && (
+            <button
+              onClick={() => onBundleClick?.(item.bundleId!)}
+              className="text-xs text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 transition-colors ml-1"
+            >
+              {item.source} → view bundle
+            </button>
+          )}
+          <div className="rounded-lg bg-slate-50 dark:bg-slate-800/50 overflow-hidden">
+            <ItemRowEditableFields
+              item={item}
+              isInactive={isInactive}
+              onSaveName={saveName}
+              onSaveMargin={saveMargin}
+              onSaveListedPrice={saveListedPrice}
+              onSaveStatus={saveStatus}
+            />
+            <ItemRowPricingBreakdown
+              item={item}
+              isInactive={isInactive}
+              totalCost={totalCost}
+              totalSaleCosts={totalSaleCosts}
+              profit={profit}
+              roi={roi}
+              onUndoSale={undoSale}
+            />
+          </div>
         </div>
       )}
     </div>

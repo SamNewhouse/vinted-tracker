@@ -5,25 +5,28 @@ import { setView, setFilter, clearFilters } from "../../store/trackerSlice";
 import type { SortField } from "../../types";
 import Button from "../1-atoms/Button";
 import Input from "../1-atoms/Input";
+import PageHeader from "../1-atoms/PageHeader";
 import Select from "../1-atoms/Select";
 import BundleList from "../3-organisms/BundleList";
 
 const SORT_OPTIONS = [
-  { value: "date", label: "Date" },
-  { value: "name", label: "Name" },
-  { value: "spend", label: "Spend" },
+  { value: "date", label: "Sort: Date" },
+  { value: "name", label: "Sort: Name" },
+  { value: "spend", label: "Sort: Spend" },
 ];
 
 const BundlesPage: FC = () => {
   const dispatch = useAppDispatch();
   const filters = useAppSelector((s) => s.tracker.filters);
+  const bundleCount = useAppSelector((s) => s.tracker.bundles.length);
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between gap-4">
-        <h1 className="font-heading font-bold text-2xl text-slate-900 dark:text-white">Bundles</h1>
-        <Button onClick={() => dispatch(setView("add-bundle"))}>+ New Bundle</Button>
-      </div>
+      <PageHeader
+        title="Bundles"
+        subtitle={`${bundleCount} bundle${bundleCount !== 1 ? "s" : ""}`}
+        actions={<Button onClick={() => dispatch(setView("add-bundle"))}>+ Add Bundle</Button>}
+      />
 
       <div className="flex flex-col sm:flex-row gap-3">
         <div className="flex-1">

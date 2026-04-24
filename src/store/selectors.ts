@@ -28,7 +28,8 @@ export const selectBundleSummary = (bundle: Bundle, items: Item[]): BundleSummar
   const bundleItems = items.filter((i) => i.bundleId === bundle.id);
   const itemCount = bundleItems.length;
 
-  const totalInvested = bundle.purchaseCost + bundle.costs.reduce((s, c) => s + c.amount, 0);
+  const totalInvested =
+    bundle.purchaseCost + (bundle.costs ?? []).reduce((s, c) => s + c.amount, 0);
   const perItemCost = itemCount > 0 ? totalInvested / itemCount : 0;
 
   const soldItems = bundleItems.filter((i) => i.status === "sold");

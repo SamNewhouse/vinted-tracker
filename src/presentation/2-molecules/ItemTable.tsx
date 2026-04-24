@@ -39,6 +39,7 @@ const ItemsTable: FC<Props> = ({ items, onMarkSold, onEdit, onDelete, showBundle
         <ItemRow
           key={item.id}
           item={item}
+          isOnly={items.length === 1}
           showBundle={showBundle}
           onMarkSold={onMarkSold}
           onEdit={onEdit}

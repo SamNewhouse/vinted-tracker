@@ -17,7 +17,7 @@ import SectionHeader from "../1-atoms/SectionHeader";
 import EmptyState from "../1-atoms/EmptyState";
 import ExtraCostRow from "../2-molecules/CostRow";
 import AddItemForm from "../3-organisms/AddItemForm";
-import AddExtraCostForm from "../3-organisms/AddExtraCostForm";
+import AddExtraCostForm from "../3-organisms/AddCostForm";
 import MarkSoldModal from "../3-organisms/MarkSoldModal";
 import EditItemModal from "../3-organisms/EditItemModal";
 import ItemTable from "../2-molecules/ItemTable";
