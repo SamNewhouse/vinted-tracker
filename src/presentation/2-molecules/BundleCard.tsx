@@ -15,11 +15,24 @@ interface Props {
   onDelete: (id: string) => void;
 }
 
+function getProgressColour(pct: number): "red" | "amber" | "emerald" {
+  if (pct >= 100) return "emerald";
+  if (pct >= 50) return "amber";
+  return "red";
+}
+
 const BundleCard: FC<Props> = ({ bundle, onView, onDelete }) => {
   const allItems = useAppSelector((state) => state.tracker.items);
   const summary = selectBundleSummary(bundle, allItems);
-  const progress = summary.itemCount > 0 ? (summary.soldItemCount / summary.itemCount) * 100 : 0;
   const defaultMarginPercent = useAppSelector((s) => s.tracker.config.defaultMarginPercent);
+
+  // Value-based progress: how much of invested cost has been recovered through revenue
+  const progress =
+    summary.totalInvested > 0
+      ? Math.min(100, (summary.totalRevenue / summary.totalInvested) * 100)
+      : 0;
+
+  const progressColour = getProgressColour(progress);
 
   return (
     <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 hover:shadow-md transition-shadow">
@@ -66,9 +79,12 @@ const BundleCard: FC<Props> = ({ bundle, onView, onDelete }) => {
             </>
           )}
         </span>
+        <span className="text-xs tabular-nums text-slate-400 dark:text-slate-500">
+          {progress.toFixed(0)}% recovered
+        </span>
       </div>
 
-      <ProgressBar value={progress} className="mb-4" />
+      <ProgressBar value={progress} colour={progressColour} className="mb-4" />
 
       <div className="flex gap-2">
         <Button size="sm" variant="secondary" fullWidth onClick={() => onView(bundle.id)}>

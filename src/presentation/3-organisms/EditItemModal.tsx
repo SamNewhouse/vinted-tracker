@@ -1,7 +1,7 @@
 "use client";
 import { FC, memo, useState } from "react";
 import { useAppDispatch } from "../../store/hooks";
-import { updateItem } from "../../store/trackerSlice";
+import { updateItem, markItemStatus } from "../../store/trackerSlice";
 import type { Item, ItemStatus } from "../../types";
 import Modal from "../1-atoms/Modal";
 import Input from "../1-atoms/Input";
@@ -27,14 +27,25 @@ const EditItemModal: FC<Props> = ({ item, onClose }) => {
   const [description, setDescription] = useState(item.description ?? "");
   const [notes, setNotes] = useState(item.notes ?? "");
   const [status, setStatus] = useState<ItemStatus>(item.status === "sold" ? "sold" : item.status);
+  const [marginPercent, setMarginPercent] = useState(String(item.targetMarginPercent));
   const [nameError, setNameError] = useState("");
+  const [marginError, setMarginError] = useState("");
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+
     if (!name.trim()) {
       setNameError("Name is required");
       return;
     }
+
+    const parsedMargin = parseFloat(marginPercent);
+    if (isNaN(parsedMargin) || parsedMargin < 0 || parsedMargin > 100) {
+      setMarginError("Enter a value between 0 and 100");
+      return;
+    }
+
+    // updateItem handles name, description, notes, margin
     dispatch(
       updateItem({
         itemId: item.id,
@@ -42,10 +53,16 @@ const EditItemModal: FC<Props> = ({ item, onClose }) => {
           name: name.trim(),
           description: description.trim() || undefined,
           notes: notes.trim() || undefined,
-          ...(item.status !== "sold" && { status }),
+          targetMarginPercent: parsedMargin,
         },
       }),
     );
+
+    // Status changes go through markItemStatus so recalculation fires correctly
+    if (item.status !== "sold" && status !== item.status) {
+      dispatch(markItemStatus({ itemId: item.id, status }));
+    }
+
     onClose();
   };
 
@@ -67,6 +84,27 @@ const EditItemModal: FC<Props> = ({ item, onClose }) => {
           onChange={(e) => setDescription(e.target.value)}
         />
         <Textarea label="Notes" value={notes} onChange={(e) => setNotes(e.target.value)} />
+
+        <div className="flex items-end gap-3">
+          <div className="flex-1">
+            <Input
+              label="Target Margin"
+              type="number"
+              min="0"
+              max="100"
+              step="1"
+              suffix="%"
+              value={marginPercent}
+              onChange={(e) => {
+                setMarginPercent(e.target.value);
+                setMarginError("");
+              }}
+              error={marginError}
+              hint="Overrides the global default for this item"
+            />
+          </div>
+        </div>
+
         {item.status !== "sold" && (
           <Select
             label="Status"
@@ -75,6 +113,7 @@ const EditItemModal: FC<Props> = ({ item, onClose }) => {
             onChange={(e) => setStatus(e.target.value as ItemStatus)}
           />
         )}
+
         <div className="flex gap-3 pt-1">
           <Button type="submit" fullWidth>
             Save

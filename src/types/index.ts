@@ -160,8 +160,9 @@ export interface AppConfig {
 
 export type ViewMode =
   | "dashboard"
-  | "items"
   | "bundles"
+  | "items"
+  | "settings"
   | "bundle-detail"
   | "add-bundle"
   | "analytics";

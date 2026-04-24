@@ -7,6 +7,7 @@ import BundlesPage from "./BundlesPage";
 import BundleDetailPage from "./BundleDetailPage";
 import AddBundleForm from "../3-organisms/AddBundleForm";
 import ItemsPage from "./ItemsPage";
+import SettingsPage from "./SettingsPage";
 
 const HomePage: FC = () => {
   const view = useAppSelector((s) => s.tracker.view);
@@ -19,6 +20,8 @@ const HomePage: FC = () => {
         return <BundlesPage />;
       case "items":
         return <ItemsPage />;
+      case "settings":
+        return <SettingsPage />;
       case "bundle-detail":
         return <BundleDetailPage />;
       case "add-bundle":

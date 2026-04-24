@@ -12,6 +12,7 @@ const navItems: { label: string; view: ViewMode; icon: string }[] = [
   { label: "Dashboard", view: "dashboard", icon: "◈" },
   { label: "Bundles", view: "bundles", icon: "◻" },
   { label: "Items", view: "items", icon: "▤" },
+  { label: "Settings", view: "settings", icon: "⚙\uFE0E" },
   { label: "Analytics", view: "analytics", icon: "◧" },
 ];
 
