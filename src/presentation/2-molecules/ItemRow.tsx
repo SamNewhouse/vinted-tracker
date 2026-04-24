@@ -39,6 +39,8 @@ const ItemRow: FC<Props> = ({
         )
       : null;
 
+  const isInactive = item.status === "unsellable" || item.status === "returned";
+
   return (
     <div className="flex items-center gap-4 py-3 border-b border-slate-100 dark:border-slate-800 last:border-0">
       {/* Col 1 — Name */}
@@ -66,15 +68,10 @@ const ItemRow: FC<Props> = ({
 
       {/* Col 2 — Values (fixed width, never flex) */}
       <div className="flex gap-4 shrink-0">
-        <span className="text-sm tabular-nums text-slate-500 dark:text-slate-400 w-20 text-right">
-          {formatCurrency(item.allocatedPurchaseCost + item.allocatedExtraCostShare)}
-        </span>
         <span className="text-sm tabular-nums font-semibold text-amber-600 dark:text-amber-400 w-20 text-right">
-          {formatCurrency(item.minSalePrice)}
+          {isInactive ? "—" : formatCurrency(item.minSalePrice)}
         </span>
-        <span
-          className={`text-sm tabular-nums font-semibold text-emerald-600 dark:text-emerald-400 w-20 text-right ...`}
-        >
+        <span className="text-sm tabular-nums font-semibold text-emerald-600 dark:text-emerald-400 w-20 text-right">
           {profit !== null ? formatCurrency(profit) : ""}
         </span>
       </div>

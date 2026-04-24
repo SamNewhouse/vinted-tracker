@@ -45,8 +45,8 @@ export function formatCurrency(amount: number): string {
   }).format(amount);
 }
 
-export function formatPercent(value: number, showSign = false): string {
-  const formatted = `${Math.abs(value).toFixed(1)}%`;
+export function formatPercent(value: number, showSign = false, decimals = 1): string {
+  const formatted = `${Math.abs(value).toFixed(decimals)}%`;
   if (!showSign) return formatted;
   return value >= 0 ? `+${formatted}` : `-${formatted}`;
 }

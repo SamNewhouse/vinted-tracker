@@ -10,7 +10,7 @@ interface Props {
   showBundle?: boolean;
 }
 
-const HEADERS = ["Cost", "Min. sale", "Profit"];
+const HEADERS = ["Min. sale", "Profit"];
 
 const ItemsTable: FC<Props> = ({ items, onMarkSold, onEdit, onDelete, showBundle = false }) => {
   return (

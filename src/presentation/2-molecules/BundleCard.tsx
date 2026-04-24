@@ -19,6 +19,7 @@ const BundleCard: FC<Props> = ({ bundle, onView, onDelete }) => {
   const allItems = useAppSelector((state) => state.tracker.items);
   const summary = selectBundleSummary(bundle, allItems);
   const progress = summary.itemCount > 0 ? (summary.soldItemCount / summary.itemCount) * 100 : 0;
+  const defaultMarginPercent = useAppSelector((s) => s.tracker.config.defaultMarginPercent);
 
   return (
     <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 hover:shadow-md transition-shadow">
@@ -60,7 +61,7 @@ const BundleCard: FC<Props> = ({ bundle, onView, onDelete }) => {
                     : "text-red-500"
                 }
               >
-                {formatPercent(summary.profitMargin, true)} margin
+                {formatPercent(defaultMarginPercent, false, 0)} margin
               </span>
             </>
           )}
