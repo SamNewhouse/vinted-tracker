@@ -148,7 +148,7 @@ export const selectFilteredItems = createSelector(
   (items, filters) => {
     let result = [...items];
 
-     if (filters?.status && filters.status !== "all") {
+    if (filters?.status && filters.status !== "all") {
       result = result.filter((i) => i.status === filters.status);
     }
     if (filters?.bundleId && filters.bundleId !== "all") {

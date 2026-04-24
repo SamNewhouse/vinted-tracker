@@ -26,12 +26,15 @@ const DashboardLayout: FC<Props> = ({ children }) => {
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex">
-      <button className="fixed bottom-0 right-0 p-3 m-3 bg-stone text-white rounded" onClick={() => {
-        localStorage.removeItem("persist:vinted-tracker-root");
-        localStorage.clear();
-        location.reload();
-        window.location.reload();
-      }}>
+      <button
+        className="fixed bottom-0 right-0 p-3 m-3 bg-stone text-white rounded"
+        onClick={() => {
+          localStorage.removeItem("persist:vinted-tracker-root");
+          localStorage.clear();
+          location.reload();
+          window.location.reload();
+        }}
+      >
         Reset State
       </button>
       {/* Sidebar — desktop only */}
@@ -85,9 +88,7 @@ const DashboardLayout: FC<Props> = ({ children }) => {
       </aside>
 
       {/* Main */}
-      <main className="flex-1 min-w-0 p-5 pb-24 md:pb-8 md:p-8">
-        {children}
-      </main>
+      <main className="flex-1 min-w-0 p-5 pb-24 md:pb-8 md:p-8">{children}</main>
 
       {/* Bottom tab bar — mobile only */}
       <div className="fixed bottom-0 left-0 right-0 flex md:hidden border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 z-50">

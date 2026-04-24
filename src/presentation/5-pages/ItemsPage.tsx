@@ -2,7 +2,13 @@
 import { FC, memo, useState } from "react";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import { selectFilteredItems } from "../../store/selectors";
-import { setFilter, clearFilters, setView, setActiveBundleId, deleteItem } from "../../store/trackerSlice";
+import {
+  setFilter,
+  clearFilters,
+  setView,
+  setActiveBundleId,
+  deleteItem,
+} from "../../store/trackerSlice";
 import EmptyState from "../1-atoms/EmptyState";
 import Button from "../1-atoms/Button";
 import Input from "../1-atoms/Input";
