@@ -15,6 +15,8 @@ const navItems: { label: string; view: ViewMode; icon: string }[] = [
   { label: "Analytics", view: "analytics", icon: "◧" },
 ];
 
+const isDev = typeof window !== "undefined" && window.location.hostname === "localhost";
+
 const DashboardLayout: FC<Props> = ({ children }) => {
   const dispatch = useAppDispatch();
   const currentView = useAppSelector((s) => s.tracker.view);
@@ -26,17 +28,17 @@ const DashboardLayout: FC<Props> = ({ children }) => {
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex">
-      <button
-        className="fixed bottom-0 right-0 p-3 m-3 bg-stone text-white rounded"
-        onClick={() => {
-          localStorage.removeItem("persist:vinted-tracker-root");
-          localStorage.clear();
-          location.reload();
-          window.location.reload();
-        }}
-      >
-        Reset State
-      </button>
+      {isDev && (
+        <button
+          className="fixed bottom-0 right-0 p-3 m-3 bg-stone text-white rounded"
+          onClick={() => {
+            localStorage.clear();
+            location.reload();
+          }}
+        >
+          Reset State
+        </button>
+      )}
       {/* Sidebar — desktop only */}
       <aside className="hidden md:flex flex-col w-56 shrink-0 border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 h-screen sticky top-0">
         {/* Logo */}
