@@ -1,4 +1,4 @@
-import type { ItemSaleCost } from "../types";
+import type { Cost } from "../types";
 
 export function calcPerItemCost(totalCost: number, itemCount: number): number {
   if (itemCount === 0) return 0;
@@ -16,7 +16,7 @@ export function calcMinSalePrice(breakEvenPrice: number, targetMarginPercent: nu
   return breakEvenPrice * (1 + targetMarginPercent / 100);
 }
 
-export function calcTotalSaleCosts(saleCosts: ItemSaleCost[]): number {
+export function calcTotalSaleCosts(saleCosts: Cost[]): number {
   return saleCosts.reduce((sum, c) => sum + c.amount, 0);
 }
 
@@ -24,7 +24,7 @@ export function calcItemProfit(
   salePrice: number,
   allocatedPurchaseCost: number,
   allocatedExtraCostShare: number,
-  saleCosts: ItemSaleCost[],
+  saleCosts: Cost[],
 ): number {
   return (
     salePrice - allocatedPurchaseCost - allocatedExtraCostShare - calcTotalSaleCosts(saleCosts)

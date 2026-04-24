@@ -1,12 +1,12 @@
 "use client";
 import { FC, memo } from "react";
-import type { BundleExtraCost } from "../../types";
+import type { Cost } from "../../types";
 import { formatCurrency } from "../../utils/finance";
 import { COST_CATEGORIES } from "../../config/constants";
 import Button from "../1-atoms/Button";
 
 interface Props {
-  cost: BundleExtraCost;
+  cost: Cost;
   onDelete: (id: string) => void;
 }
 

@@ -13,9 +13,7 @@ import {
 } from "../types";
 import { REHYDRATE } from "redux-persist";
 
-
 // ── State ────────────────────────────────────────────────────
-
 
 interface TrackerState {
   bundles: Bundle[];
@@ -26,7 +24,6 @@ interface TrackerState {
   config: AppConfig;
 }
 
-
 const defaultFilters: FilterState = {
   search: "",
   status: "all",
@@ -34,7 +31,6 @@ const defaultFilters: FilterState = {
   sortField: "date",
   sortDirection: "desc",
 };
-
 
 export const initialState: TrackerState = {
   bundles: [],
@@ -48,14 +44,11 @@ export const initialState: TrackerState = {
   },
 };
 
-
 // ── Helpers ──────────────────────────────────────────────────
-
 
 function isActiveItem(item: Item): boolean {
   return item.status !== "unsellable" && item.status !== "returned" && item.status !== "sold";
 }
-
 
 /**
  * Recalculates cost allocations for all non-sold items in a bundle.
@@ -103,7 +96,6 @@ function recalculateAllocations(
   }
 }
 
-
 /**
  * Recalculates prices for a standalone item in-place.
  */
@@ -117,16 +109,13 @@ function recalculateStandalone(item: Item, defaultMarginPercent: number): void {
   item.updatedAt = new Date().toISOString();
 }
 
-
 // ── Slice ────────────────────────────────────────────────────
-
 
 const trackerSlice = createSlice({
   name: "tracker",
   initialState,
   reducers: {
     // ── Bundles ──────────────────────────────────────────────
-
 
     addBundle(
       state,
@@ -181,7 +170,6 @@ const trackerSlice = createSlice({
       state.view = "bundle-detail";
     },
 
-
     updateBundle(
       state,
       action: PayloadAction<{
@@ -207,7 +195,6 @@ const trackerSlice = createSlice({
       }
     },
 
-
     deleteBundle(state, action: PayloadAction<string>) {
       state.bundles = state.bundles.filter((b) => b.id !== action.payload);
       state.items = state.items.filter((i) => i.bundleId !== action.payload);
@@ -217,9 +204,7 @@ const trackerSlice = createSlice({
       }
     },
 
-
     // ── Items ────────────────────────────────────────────────
-
 
     /**
      * Add a single item to an existing bundle.
@@ -264,7 +249,6 @@ const trackerSlice = createSlice({
       recalculateAllocations(bundle, state.items, state.config.defaultMarginPercent);
     },
 
-
     /**
      * Add multiple items at once to an existing bundle.
      * Used when a user wants to bulk-add items to a bundle after it's been created.
@@ -308,7 +292,6 @@ const trackerSlice = createSlice({
       recalculateAllocations(bundle, state.items, state.config.defaultMarginPercent);
     },
 
-
     addStandaloneItem(
       state,
       action: PayloadAction<{
@@ -322,8 +305,15 @@ const trackerSlice = createSlice({
       }>,
     ) {
       const now = new Date().toISOString();
-      const { name, source, purchaseDate, purchaseCost, description, notes, costs = [] } =
-        action.payload;
+      const {
+        name,
+        source,
+        purchaseDate,
+        purchaseCost,
+        description,
+        notes,
+        costs = [],
+      } = action.payload;
       const resolvedCosts = costs.map((c) => ({ ...c, id: uuidv4() }));
       const totalCosts = resolvedCosts.reduce((s, c) => s + c.amount, 0);
       const breakEven = purchaseCost + totalCosts;
@@ -350,7 +340,6 @@ const trackerSlice = createSlice({
         updatedAt: now,
       });
     },
-
 
     updateItem(
       state,
@@ -380,20 +369,16 @@ const trackerSlice = createSlice({
       }
     },
 
-
     deleteItem(state, action: PayloadAction<string>) {
       const item = state.items.find((i) => i.id === action.payload);
       if (!item) return;
-      const bundle = item.bundleId
-        ? state.bundles.find((b) => b.id === item.bundleId)
-        : undefined;
+      const bundle = item.bundleId ? state.bundles.find((b) => b.id === item.bundleId) : undefined;
       state.items = state.items.filter((i) => i.id !== action.payload);
       if (bundle) {
         bundle.updatedAt = new Date().toISOString();
         recalculateAllocations(bundle, state.items, state.config.defaultMarginPercent);
       }
     },
-
 
     markItemSold(
       state,
@@ -419,7 +404,6 @@ const trackerSlice = createSlice({
       }
     },
 
-
     markItemStatus(state, action: PayloadAction<{ itemId: string; status: ItemStatus }>) {
       const item = state.items.find((i) => i.id === action.payload.itemId);
       if (!item) return;
@@ -438,21 +422,15 @@ const trackerSlice = createSlice({
       }
     },
 
-
     // ── Bundle Costs ─────────────────────────────────────────
 
-
-    addBundleCost(
-      state,
-      action: PayloadAction<{ bundleId: string; cost: Omit<Cost, "id"> }>,
-    ) {
+    addBundleCost(state, action: PayloadAction<{ bundleId: string; cost: Omit<Cost, "id"> }>) {
       const bundle = state.bundles.find((b) => b.id === action.payload.bundleId);
       if (!bundle) return;
       bundle.costs.push({ ...action.payload.cost, id: uuidv4() });
       bundle.updatedAt = new Date().toISOString();
       recalculateAllocations(bundle, state.items, state.config.defaultMarginPercent);
     },
-
 
     deleteBundleCost(state, action: PayloadAction<{ bundleId: string; costId: string }>) {
       const bundle = state.bundles.find((b) => b.id === action.payload.bundleId);
@@ -462,32 +440,25 @@ const trackerSlice = createSlice({
       recalculateAllocations(bundle, state.items, state.config.defaultMarginPercent);
     },
 
-
     // ── UI State ─────────────────────────────────────────────
-
 
     setView(state, action: PayloadAction<ViewMode>) {
       state.view = action.payload;
     },
 
-
     setActiveBundleId(state, action: PayloadAction<string | null>) {
       state.activeBundleId = action.payload;
     },
-
 
     setFilter(state, action: PayloadAction<Partial<FilterState>>) {
       state.filters = { ...state.filters, ...action.payload };
     },
 
-
     clearFilters(state) {
       state.filters = defaultFilters;
     },
 
-
     // ── Config ───────────────────────────────────────────────
-
 
     setDefaultMargin(state, action: PayloadAction<number>) {
       state.config.defaultMarginPercent = action.payload;
@@ -511,7 +482,6 @@ const trackerSlice = createSlice({
         }
       }
     },
-
 
     setDefaultSaleCosts(state, action: PayloadAction<Cost[]>) {
       state.config.defaultSaleCosts = action.payload;
@@ -541,7 +511,6 @@ const trackerSlice = createSlice({
   },
 });
 
-
 export const {
   addBundle,
   updateBundle,
@@ -562,6 +531,5 @@ export const {
   setDefaultMargin,
   setDefaultSaleCosts,
 } = trackerSlice.actions;
-
 
 export default trackerSlice.reducer;

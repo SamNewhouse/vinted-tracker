@@ -15,7 +15,7 @@ import ValueCell from "../1-atoms/ValueCell";
 import ProfitValue from "../1-atoms/ProfitValue";
 import SectionHeader from "../1-atoms/SectionHeader";
 import EmptyState from "../1-atoms/EmptyState";
-import ExtraCostRow from "../2-molecules/ExtraCostRow";
+import ExtraCostRow from "../2-molecules/CostRow";
 import AddItemForm from "../3-organisms/AddItemForm";
 import AddExtraCostForm from "../3-organisms/AddExtraCostForm";
 import MarkSoldModal from "../3-organisms/MarkSoldModal";
@@ -171,9 +171,7 @@ const BundleDetailPage: FC = () => {
               <ExtraCostRow
                 key={cost.id}
                 cost={cost}
-                onDelete={(id) =>
-                  dispatch(deleteBundleCost({ bundleId: bundle.id, costId: id }))
-                }
+                onDelete={(id) => dispatch(deleteBundleCost({ bundleId: bundle.id, costId: id }))}
               />
             ))
           )}

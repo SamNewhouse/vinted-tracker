@@ -59,15 +59,16 @@ const MarkSoldModal: FC<Props> = ({ item, onClose }) => {
           parsedPrice,
           item.allocatedPurchaseCost,
           item.allocatedCostShare,
-          activeCosts.map(({ id, category, label, amount }): Cost => ({ id, category, label, amount })),
+          activeCosts.map(
+            ({ id, category, label, amount }): Cost => ({ id, category, label, amount }),
+          ),
         )
       : null;
 
   const updateCost = (id: string, changes: Partial<DraftSaleCost>) =>
     setDraftCosts((prev) => prev.map((c) => (c.id === id ? { ...c, ...changes } : c)));
 
-  const removeCost = (id: string) =>
-    setDraftCosts((prev) => prev.filter((c) => c.id !== id));
+  const removeCost = (id: string) => setDraftCosts((prev) => prev.filter((c) => c.id !== id));
 
   const handleCategoryChange = (id: string, category: CostCategory) => {
     const found = COST_CATEGORIES.find((c) => c.value === category);
@@ -84,12 +85,14 @@ const MarkSoldModal: FC<Props> = ({ item, onClose }) => {
       markItemSold({
         itemId: item.id,
         salePrice: parsedPrice,
-        saleCosts: activeCosts.map(({ id, category, label, amount }): Cost => ({
-          id,
-          category,
-          label,
-          amount,
-        })),
+        saleCosts: activeCosts.map(
+          ({ id, category, label, amount }): Cost => ({
+            id,
+            category,
+            label,
+            amount,
+          }),
+        ),
       }),
     );
     onClose();
@@ -151,9 +154,7 @@ const MarkSoldModal: FC<Props> = ({ item, onClose }) => {
               <div className="flex-1">
                 <Select
                   value={cost.category}
-                  onChange={(e) =>
-                    handleCategoryChange(cost.id, e.target.value as CostCategory)
-                  }
+                  onChange={(e) => handleCategoryChange(cost.id, e.target.value as CostCategory)}
                   options={COST_CATEGORIES.map((c) => ({ value: c.value, label: c.label }))}
                 />
               </div>

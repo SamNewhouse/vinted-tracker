@@ -55,8 +55,8 @@ export interface Item {
   minSalePrice: number;
   targetMarginPercent: number;
   marginOverridden?: boolean;
-  costs: Cost[];      // acquisition costs (standalone only); empty for bundle items
-  saleCosts: Cost[];  // costs incurred when selling
+  costs: Cost[]; // acquisition costs (standalone only); empty for bundle items
+  saleCosts: Cost[]; // costs incurred when selling
   status: ItemStatus;
   listedAt?: string;
   listedPrice?: number;

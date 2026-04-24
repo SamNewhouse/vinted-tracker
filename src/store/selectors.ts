@@ -1,6 +1,7 @@
 import { createSelector } from "@reduxjs/toolkit";
 import type { RootState } from "./store";
 import type { Bundle, Item, BundleSummary, DashboardStats } from "../types";
+import { calcItemProfit } from "../utils/finance";
 
 // ── Base selectors ───────────────────────────────────────────
 
@@ -27,7 +28,7 @@ export const selectBundleSummary = (bundle: Bundle, items: Item[]): BundleSummar
   const bundleItems = items.filter((i) => i.bundleId === bundle.id);
   const itemCount = bundleItems.length;
 
-  const totalInvested = bundle.purchaseCost + bundle.extraCosts.reduce((s, c) => s + c.amount, 0);
+  const totalInvested = bundle.purchaseCost + bundle.costs.reduce((s, c) => s + c.amount, 0);
   const perItemCost = itemCount > 0 ? totalInvested / itemCount : 0;
 
   const soldItems = bundleItems.filter((i) => i.status === "sold");
@@ -65,25 +66,43 @@ export const selectDashboardStats = createSelector(
   (bundles, items): DashboardStats => {
     const summaries = bundles.map((b) => selectBundleSummary(b, items));
 
-    const totalSpend = summaries.reduce((s, b) => s + b.totalInvested, 0);
-    const totalSaleCosts = summaries.reduce((s, b) => s + b.totalSaleCosts, 0);
-    const totalRevenue = summaries.reduce((s, b) => s + b.totalRevenue, 0);
+    const bundleSpend = summaries.reduce((s, b) => s + b.totalInvested, 0);
+    const bundleSaleCosts = summaries.reduce((s, b) => s + b.totalSaleCosts, 0);
+    const bundleRevenue = summaries.reduce((s, b) => s + b.totalRevenue, 0);
+
+    const standaloneItems = items.filter((i) => !i.bundleId);
+    const standaloneSpend = standaloneItems.reduce(
+      (s, i) => s + i.purchaseCost + i.costs.reduce((sc, c) => sc + c.amount, 0),
+      0,
+    );
+    const standaloneSaleCosts = standaloneItems.reduce(
+      (s, i) => s + i.saleCosts.reduce((sc, c) => sc + c.amount, 0),
+      0,
+    );
+    const standaloneRevenue = standaloneItems
+      .filter((i) => i.status === "sold")
+      .reduce((s, i) => s + (i.salePrice ?? 0), 0);
+
+    const totalSpend = bundleSpend + standaloneSpend;
+    const totalSaleCosts = bundleSaleCosts + standaloneSaleCosts;
+    const totalRevenue = bundleRevenue + standaloneRevenue;
     const totalProfit = totalRevenue - totalSpend - totalSaleCosts;
     const overallROI = totalSpend > 0 ? (totalProfit / totalSpend) * 100 : 0;
 
     const soldItems = items.filter((i) => i.status === "sold");
     const avgProfitPerItem =
       soldItems.length > 0
-        ? soldItems.reduce((s, i) => {
-            const saleCosts = i.saleCosts.reduce((sc, c) => sc + c.amount, 0);
-            return (
+        ? soldItems.reduce(
+            (s, i) =>
               s +
-              (i.salePrice ?? 0) -
-              i.allocatedPurchaseCost -
-              i.allocatedExtraCostShare -
-              saleCosts
-            );
-          }, 0) / soldItems.length
+              calcItemProfit(
+                i.salePrice ?? 0,
+                i.allocatedPurchaseCost,
+                i.allocatedCostShare,
+                i.saleCosts,
+              ),
+            0,
+          ) / soldItems.length
         : 0;
 
     return {
@@ -144,24 +163,33 @@ export const selectFilteredBundles = createSelector(
 // ── All items (filtered/sorted) - for the Items view ────────
 
 export const selectFilteredItems = createSelector(
-  [selectAllItems, selectFilters],
-  (items, filters) => {
+  [selectAllItems, selectBundles, selectFilters],
+  (items, bundles, filters) => {
     let result = [...items];
 
     if (filters?.status && filters.status !== "all") {
       result = result.filter((i) => i.status === filters.status);
     }
+
     if (filters?.bundleId && filters.bundleId !== "all") {
-      result = result.filter((i) => i.bundleId === filters.bundleId);
+      if (filters.bundleId === "standalone") {
+        result = result.filter((i) => !i.bundleId);
+      } else {
+        result = result.filter((i) => i.bundleId === filters.bundleId);
+      }
     }
+
     if (filters?.search) {
       const q = filters.search.toLowerCase();
-      result = result.filter(
-        (i) =>
-          i.name.toLowerCase().includes(q) ||
-          i.bundleName.toLowerCase().includes(q) ||
-          i.bundleSource.toLowerCase().includes(q),
-      );
+      result = result.filter((i) => {
+        if (i.name.toLowerCase().includes(q)) return true;
+        if (i.source.toLowerCase().includes(q)) return true;
+        if (i.bundleId) {
+          const bundle = bundles.find((b) => b.id === i.bundleId);
+          if (bundle?.name.toLowerCase().includes(q)) return true;
+        }
+        return false;
+      });
     }
 
     result.sort((a, b) => {
@@ -174,17 +202,21 @@ export const selectFilteredItems = createSelector(
         case "profit": {
           const pa =
             a.salePrice != null
-              ? a.salePrice -
-                a.allocatedPurchaseCost -
-                a.allocatedExtraCostShare -
-                a.saleCosts.reduce((s, c) => s + c.amount, 0)
+              ? calcItemProfit(
+                  a.salePrice,
+                  a.allocatedPurchaseCost,
+                  a.allocatedCostShare,
+                  a.saleCosts,
+                )
               : -Infinity;
           const pb =
             b.salePrice != null
-              ? b.salePrice -
-                b.allocatedPurchaseCost -
-                b.allocatedExtraCostShare -
-                b.saleCosts.reduce((s, c) => s + c.amount, 0)
+              ? calcItemProfit(
+                  b.salePrice,
+                  b.allocatedPurchaseCost,
+                  b.allocatedCostShare,
+                  b.saleCosts,
+                )
               : -Infinity;
           return (pa - pb) * dir;
         }

@@ -140,12 +140,8 @@ const SettingsPage: FC = () => {
               value=""
               onChange={(e) => {
                 const cat = e.target.value as CostCategory;
-                const label =
-                  COST_CATEGORIES.find((c) => c.value === cat)?.label ?? cat;
-                setLocalCosts([
-                  ...localCosts,
-                  { id: uuidv4(), label, category: cat, amount: 0 },
-                ]);
+                const label = COST_CATEGORIES.find((c) => c.value === cat)?.label ?? cat;
+                setLocalCosts([...localCosts, { id: uuidv4(), label, category: cat, amount: 0 }]);
               }}
               className="text-sm bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-1.5 text-slate-500 dark:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-900 dark:focus:ring-white"
             >

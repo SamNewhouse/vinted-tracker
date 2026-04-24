@@ -1,4 +1,4 @@
-import type { BundleSource, CostCategory } from "../types";
+import type { Source, CostCategory } from "../types";
 
 export const COST_CATEGORIES: { value: CostCategory; label: string; hint: string }[] = [
   { value: "postage", label: "Postage", hint: "Postage paid to receive or send an item" },
@@ -10,7 +10,7 @@ export const COST_CATEGORIES: { value: CostCategory; label: string; hint: string
   { value: "other_purchase", label: "Other", hint: "Any other upfront cost before selling" },
 ];
 
-export const SOURCES: { value: BundleSource; label: string }[] = [
+export const SOURCES: { value: Source; label: string }[] = [
   { value: "vinted", label: "Vinted" },
   { value: "car_boot", label: "Car Boot" },
   { value: "charity_shop", label: "Charity Shop" },

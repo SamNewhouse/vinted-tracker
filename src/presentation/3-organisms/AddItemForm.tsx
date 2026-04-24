@@ -41,26 +41,33 @@ const AddItemForm: FC<Props> = ({ bundleId, onClose }) => {
     if (isStandalone && (!purchaseCost || isNaN(Number(purchaseCost)) || Number(purchaseCost) < 0))
       errs.purchaseCost = "Enter a valid purchase cost";
     if (isStandalone && !purchaseDate) errs.purchaseDate = "Purchase date is required";
-    if (Object.keys(errs).length > 0) { setErrors(errs); return; }
+    if (Object.keys(errs).length > 0) {
+      setErrors(errs);
+      return;
+    }
 
     if (isStandalone) {
-      dispatch(addStandaloneItem({
-        name: name.trim(),
-        source,
-        purchaseDate,
-        purchaseCost: Number(purchaseCost),
-        description: description.trim() || undefined,
-        notes: notes.trim() || undefined,
-        costs,
-      }));
+      dispatch(
+        addStandaloneItem({
+          name: name.trim(),
+          source,
+          purchaseDate,
+          purchaseCost: Number(purchaseCost),
+          description: description.trim() || undefined,
+          notes: notes.trim() || undefined,
+          costs,
+        }),
+      );
       dispatch(setView("items"));
     } else {
-      dispatch(addItem({
-        bundleId,
-        name: name.trim(),
-        description: description.trim() || undefined,
-        notes: notes.trim() || undefined,
-      }));
+      dispatch(
+        addItem({
+          bundleId,
+          name: name.trim(),
+          description: description.trim() || undefined,
+          notes: notes.trim() || undefined,
+        }),
+      );
       onClose();
     }
   };
@@ -69,16 +76,26 @@ const AddItemForm: FC<Props> = ({ bundleId, onClose }) => {
   const totalInvested = (Number(purchaseCost) || 0) + totalExtraCosts;
 
   return (
-    <div className={isStandalone ? "max-w-2xl mx-auto" : "rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 p-5 mt-4"}>
+    <div
+      className={
+        isStandalone
+          ? "max-w-2xl mx-auto"
+          : "rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 p-5 mt-4"
+      }
+    >
       {isStandalone ? (
         <div className="mb-6">
-          <h2 className="font-heading font-bold text-xl text-slate-900 dark:text-white">Add Standalone Item</h2>
+          <h2 className="font-heading font-bold text-xl text-slate-900 dark:text-white">
+            Add Standalone Item
+          </h2>
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
             Log a single item purchased on its own, not as part of a bundle.
           </p>
         </div>
       ) : (
-        <h3 className="font-heading font-semibold text-sm text-slate-900 dark:text-white mb-4">Add Item</h3>
+        <h3 className="font-heading font-semibold text-sm text-slate-900 dark:text-white mb-4">
+          Add Item
+        </h3>
       )}
 
       <form onSubmit={handleSubmit} className="space-y-3">
