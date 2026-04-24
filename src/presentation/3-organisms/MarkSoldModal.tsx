@@ -43,7 +43,7 @@ const MarkSoldModal: FC<Props> = ({ item, onClose }) => {
       category: c.category,
       label: COST_CATEGORIES.find((cat) => cat.value === c.category)?.label ?? c.category,
       amount: c.amount > 0 ? String(c.amount) : "",
-    }))
+    })),
   );
 
   const parsedPrice = parseFloat(salePrice);
