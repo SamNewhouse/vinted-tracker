@@ -12,7 +12,7 @@ export function calcBreakEvenPrice(
   return allocatedPurchaseCost + allocatedExtraCostShare;
 }
 
-export function calcMinSalePrice(breakEvenPrice: number, targetMarginPercent: number = 15): number {
+export function calcMinSalePrice(breakEvenPrice: number, targetMarginPercent: number): number {
   return breakEvenPrice * (1 + targetMarginPercent / 100);
 }
 

@@ -154,6 +154,10 @@ export interface DashboardStats {
 
 // ── UI State ──────────────────────────────────────────────────
 
+export interface AppConfig {
+  defaultMarginPercent: number;
+}
+
 export type ViewMode =
   | "dashboard"
   | "items"

@@ -9,6 +9,7 @@ import {
   DraftItem,
   ViewMode,
   FilterState,
+  AppConfig,
 } from "../types";
 import { REHYDRATE } from "redux-persist";
 
@@ -18,6 +19,7 @@ interface TrackerState {
   activeBundleId: string | null;
   view: ViewMode;
   filters: FilterState;
+  config: AppConfig;
 }
 
 const defaultFilters: FilterState = {
@@ -34,6 +36,9 @@ export const initialState: TrackerState = {
   activeBundleId: null,
   view: "dashboard",
   filters: defaultFilters,
+  config: {
+    defaultMarginPercent: 15,
+  },
 };
 
 const trackerSlice = createSlice({
@@ -78,7 +83,7 @@ const trackerSlice = createSlice({
           notes: draft.notes,
           allocatedPurchaseCost: perItemPurchaseCost,
           allocatedExtraCostShare: 0,
-          targetMarginPercent: 15,
+          targetMarginPercent: state.config.defaultMarginPercent,
           breakEvenPrice: perItemPurchaseCost,
           minSalePrice: perItemPurchaseCost * 1.15,
           saleCosts: [],
@@ -141,20 +146,6 @@ const trackerSlice = createSlice({
       if (!bundle) return;
 
       const now = new Date().toISOString();
-      const bundleItems = state.items.filter((i) => i.bundleId === bundle.id);
-      const newCount = bundleItems.length + 1;
-
-      const perItemPurchaseCost = bundle.purchaseCost / newCount;
-      const sharedExtraCosts = bundle.extraCosts.reduce((s, c) => s + c.amount, 0);
-      const perItemExtraShare = sharedExtraCosts / newCount;
-
-      for (const item of bundleItems) {
-        item.allocatedPurchaseCost = perItemPurchaseCost;
-        item.allocatedExtraCostShare = perItemExtraShare;
-        item.breakEvenPrice = perItemPurchaseCost + perItemExtraShare;
-        item.minSalePrice = item.breakEvenPrice * (1 + item.targetMarginPercent / 100);
-        item.updatedAt = now;
-      }
 
       state.items.push({
         id: uuidv4(),
@@ -165,11 +156,11 @@ const trackerSlice = createSlice({
         name: action.payload.name,
         description: action.payload.description,
         notes: action.payload.notes,
-        allocatedPurchaseCost: perItemPurchaseCost,
-        allocatedExtraCostShare: perItemExtraShare,
-        targetMarginPercent: 15,
-        breakEvenPrice: perItemPurchaseCost + perItemExtraShare,
-        minSalePrice: (perItemPurchaseCost + perItemExtraShare) * 1.15,
+        allocatedPurchaseCost: 0,
+        allocatedExtraCostShare: 0,
+        targetMarginPercent: state.config.defaultMarginPercent,
+        breakEvenPrice: 0,
+        minSalePrice: 0,
         saleCosts: [],
         status: "unlisted",
         createdAt: now,
@@ -177,6 +168,7 @@ const trackerSlice = createSlice({
       });
 
       bundle.updatedAt = now;
+      recalculateAllocations(bundle, state.items);
     },
 
     updateItem(
@@ -238,6 +230,9 @@ const trackerSlice = createSlice({
         item.saleCosts = [];
       }
       item.updatedAt = new Date().toISOString();
+
+      const bundle = state.bundles.find((b) => b.id === item.bundleId);
+      if (bundle) recalculateAllocations(bundle, state.items);
     },
 
     // ── Bundle Extra Costs ───────────────────────────────────
@@ -278,6 +273,10 @@ const trackerSlice = createSlice({
     clearFilters(state) {
       state.filters = defaultFilters;
     },
+
+    setDefaultMargin(state, action: PayloadAction<number>) {
+      state.config.defaultMarginPercent = action.payload;
+    },
   },
   extraReducers: (builder) => {
     builder.addCase(REHYDRATE, (_state, action: any) => {
@@ -295,19 +294,22 @@ const trackerSlice = createSlice({
 
 function recalculateAllocations(bundle: Bundle, allItems: Item[]): void {
   const bundleItems = allItems.filter((i) => i.bundleId === bundle.id);
-  const itemCount = bundleItems.length;
-  if (itemCount === 0) return;
+  const activeItems = bundleItems.filter(
+    (i) => i.status !== "unsellable" && i.status !== "returned",
+  );
+  if (activeItems.length === 0) return;
 
   const now = new Date().toISOString();
-  const perItemPurchaseCost = bundle.purchaseCost / itemCount;
-  const sharedExtraCosts = bundle.extraCosts.reduce((s, c) => s + c.amount, 0);
-  const perItemExtraShare = sharedExtraCosts / itemCount;
+  const totalExtraCosts = bundle.extraCosts.reduce((s, c) => s + c.amount, 0);
+  const totalInvested = bundle.purchaseCost + totalExtraCosts;
+  const perItemShare = totalInvested / activeItems.length;
 
   for (const item of bundleItems) {
-    item.allocatedPurchaseCost = perItemPurchaseCost;
-    item.allocatedExtraCostShare = perItemExtraShare;
-    item.breakEvenPrice = perItemPurchaseCost + perItemExtraShare;
-    item.minSalePrice = item.breakEvenPrice * (1 + item.targetMarginPercent / 100);
+    const isActive = item.status !== "unsellable" && item.status !== "returned";
+    item.allocatedPurchaseCost = isActive ? perItemShare : 0;
+    item.allocatedExtraCostShare = 0;
+    item.breakEvenPrice = isActive ? perItemShare : 0;
+    item.minSalePrice = isActive ? perItemShare * (1 + item.targetMarginPercent / 100) : 0;
     item.updatedAt = now;
   }
 }

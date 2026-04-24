@@ -31,6 +31,8 @@ const BundleDetailPage: FC = () => {
   const [soldItem, setSoldItem] = useState<Item | null>(null);
   const [editItem, setEditItem] = useState<Item | null>(null);
 
+  const defaultMarginPercent = useAppSelector(s => s.tracker.config.defaultMarginPercent);
+
   if (!bundle) {
     return (
       <EmptyState
@@ -103,7 +105,7 @@ const BundleDetailPage: FC = () => {
       <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
         <SectionHeader
           title="Items"
-          subtitle={`${summary.soldItemCount}/${summary.itemCount} sold · Min. sale = cost + 15% margin`}
+          subtitle={`${summary.soldItemCount}/${summary.itemCount} sold · Min. sale = cost + ${formatPercent(defaultMarginPercent)}% margin`}
           action={
             <Button
               size="sm"
