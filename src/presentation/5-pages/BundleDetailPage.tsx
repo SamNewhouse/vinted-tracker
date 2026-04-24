@@ -48,7 +48,7 @@ const BundleDetailPage: FC = () => {
   const totalExtraCosts = bundle.extraCosts.reduce((s, c) => s + c.amount, 0);
 
   return (
-    <div className="space-y-6 max-w-5xl">
+    <div className="space-y-6">
       {/* Header */}
       <div className="flex items-start gap-4">
         <button

@@ -67,7 +67,7 @@ const AddBundleForm: FC = () => {
   const totalInvested = (Number(purchaseCost) || 0) + totalExtraCosts;
 
   return (
-    <div className="max-w-xl mx-auto">
+    <div className="max-w-2xl mx-auto">
       <div className="mb-6">
         <h2 className="font-heading font-bold text-xl text-slate-900 dark:text-white">
           Add New Bundle
