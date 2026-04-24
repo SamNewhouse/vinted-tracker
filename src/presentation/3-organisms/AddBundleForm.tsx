@@ -73,7 +73,7 @@ const AddBundleForm: FC = () => {
           Add New Bundle
         </h2>
         <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-          Log a purchase. Add items now — sale costs are recorded per item when you mark it as sold.
+          Log a purchase. Add items now - sale costs are recorded per item when you mark it as sold.
         </p>
       </div>
 

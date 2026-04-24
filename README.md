@@ -4,11 +4,11 @@ A personal finance tracker for Vinted resellers. Track bundles of clothing you b
 
 ## What it does
 
-- **Bundles** — Log purchases (car boots, charity shops, etc.) with costs and extra expenses (travel, parking, cleaning)
-- **Items** — Track each item in a bundle, auto-calculated break-even and minimum sale prices
-- **Items list** — Cross-bundle view of all items with filtering by status, bundle, and sort options
-- **Dashboard** — Top-level stats: total spend, revenue, profit, ROI
-- **Analytics** — Coming soon
+- **Bundles** - Log purchases (car boots, charity shops, etc.) with costs and extra expenses (travel, parking, cleaning)
+- **Items** - Track each item in a bundle, auto-calculated break-even and minimum sale prices
+- **Items list** - Cross-bundle view of all items with filtering by status, bundle, and sort options
+- **Dashboard** - Top-level stats: total spend, revenue, profit, ROI
+- **Analytics** - Coming soon
 
 ## Tech stack
 

@@ -141,7 +141,7 @@ export const selectFilteredBundles = createSelector(
   },
 );
 
-// ── All items (filtered/sorted) — for the Items view ────────
+// ── All items (filtered/sorted) - for the Items view ────────
 
 export const selectFilteredItems = createSelector(
   [selectAllItems, selectFilters],

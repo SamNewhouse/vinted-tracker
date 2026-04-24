@@ -42,11 +42,15 @@ const ItemRow: FC<Props> = ({
 
   const profit =
     item.salePrice != null
-      ? calcItemProfit(item.salePrice, item.allocatedPurchaseCost, item.allocatedExtraCostShare, item.saleCosts)
+      ? calcItemProfit(
+          item.salePrice,
+          item.allocatedPurchaseCost,
+          item.allocatedExtraCostShare,
+          item.saleCosts,
+        )
       : null;
 
-  const roi =
-    profit !== null ? calcROI(profit, totalCost) : null;
+  const roi = profit !== null ? calcROI(profit, totalCost) : null;
 
   const saveName = (val: string) => {
     const trimmed = val.trim();
@@ -70,8 +74,7 @@ const ItemRow: FC<Props> = ({
       dispatch(markItemStatus({ itemId: item.id, status: val as ItemStatus }));
   };
 
-  const undoSale = () =>
-    dispatch(markItemStatus({ itemId: item.id, status: "listed" }));
+  const undoSale = () => dispatch(markItemStatus({ itemId: item.id, status: "listed" }));
 
   return (
     <div className="border-b border-slate-100 dark:border-slate-800 last:border-0">
@@ -93,7 +96,10 @@ const ItemRow: FC<Props> = ({
           </div>
           {showBundle && (
             <span
-              onClick={(e) => { e.stopPropagation(); onBundleClick?.(item.bundleId); }}
+              onClick={(e) => {
+                e.stopPropagation();
+                onBundleClick?.(item.bundleId);
+              }}
               className="text-xs text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 mt-0.5 ml-4 cursor-pointer transition-colors"
             >
               {item.bundleName} →
@@ -108,7 +114,7 @@ const ItemRow: FC<Props> = ({
 
         <div className="flex gap-4 shrink-0">
           <span className="text-sm tabular-nums font-semibold text-amber-600 dark:text-amber-400 w-20 text-right">
-            {isInactive ? "—" : formatCurrency(item.minSalePrice)}
+            {isInactive ? "-" : formatCurrency(item.minSalePrice)}
           </span>
           <span className="text-sm tabular-nums font-semibold text-emerald-600 dark:text-emerald-400 w-20 text-right">
             {profit !== null ? formatCurrency(profit) : ""}

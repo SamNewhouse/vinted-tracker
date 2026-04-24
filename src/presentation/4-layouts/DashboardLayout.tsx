@@ -40,7 +40,7 @@ const DashboardLayout: FC<Props> = ({ children }) => {
           Reset State
         </button>
       )}
-      {/* Sidebar — desktop only */}
+      {/* Sidebar - desktop only */}
       <aside className="hidden md:flex flex-col w-56 shrink-0 border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 h-screen sticky top-0">
         {/* Logo */}
         <div className="px-5 py-5 border-b border-slate-100 dark:border-slate-800">
@@ -93,7 +93,7 @@ const DashboardLayout: FC<Props> = ({ children }) => {
       {/* Main */}
       <main className="flex-1 min-w-0 p-5 pb-24 md:pb-8 md:p-8">{children}</main>
 
-      {/* Bottom tab bar — mobile only */}
+      {/* Bottom tab bar - mobile only */}
       <div className="fixed bottom-0 left-0 right-0 flex md:hidden border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 z-50">
         {navItems.map((item) => (
           <button

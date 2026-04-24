@@ -19,7 +19,10 @@ interface Props {
   onSaveStatus: (val: string) => void;
 }
 
-export const StatusField: FC<{ value: ItemStatus; onSave: (val: string) => void }> = ({ value, onSave }) => {
+export const StatusField: FC<{ value: ItemStatus; onSave: (val: string) => void }> = ({
+  value,
+  onSave,
+}) => {
   const [editing, setEditing] = useState(false);
 
   if (!editing) {
@@ -46,12 +49,17 @@ export const StatusField: FC<{ value: ItemStatus; onSave: (val: string) => void 
       <select
         autoFocus
         value={value}
-        onChange={(e) => { onSave(e.target.value); setEditing(false); }}
+        onChange={(e) => {
+          onSave(e.target.value);
+          setEditing(false);
+        }}
         onBlur={() => setEditing(false)}
         className="text-sm p-1 font-semibold bg-white dark:bg-slate-800 border-b border-slate-300 dark:border-slate-600 text-slate-900 dark:text-white focus:outline-none cursor-pointer rounded-sm"
       >
         {STATUS_OPTIONS.map((o) => (
-          <option key={o.value} value={o.value}>{o.label}</option>
+          <option key={o.value} value={o.value}>
+            {o.label}
+          </option>
         ))}
       </select>
     </div>
@@ -88,7 +96,7 @@ const ItemRowEditableFields: FC<Props> = ({
     />
     <InlineField
       label="Listed price"
-      displayValue={item.listedPrice != null ? formatCurrency(item.listedPrice) : "—"}
+      displayValue={item.listedPrice != null ? formatCurrency(item.listedPrice) : "-"}
       editValue={item.listedPrice != null ? String(item.listedPrice) : ""}
       onSave={onSaveListedPrice}
       type="number"
@@ -97,9 +105,7 @@ const ItemRowEditableFields: FC<Props> = ({
       min={0.01}
       disabled={item.status === "sold"}
     />
-    {item.status !== "sold" && (
-      <StatusField value={item.status} onSave={onSaveStatus} />
-    )}
+    {item.status !== "sold" && <StatusField value={item.status} onSave={onSaveStatus} />}
   </div>
 );
 

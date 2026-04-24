@@ -6,7 +6,7 @@
 ## Up next
 - Edit extra costs on a bundle (currently add-only)
 - Item detail page / expanded view
-- Add item form — bulk add (multiple items at once)
+- Add item form - bulk add (multiple items at once)
 
 ## Features
 - Export to CSV (bundles + items)
@@ -19,7 +19,7 @@
 - Empty state illustrations
 - Confirm dialog before delete (bundle + item)
 - Toast notifications on save/delete
-- Mobile — Add Bundle accessible from bottom nav (FAB or sheet)
+- Mobile - Add Bundle accessible from bottom nav (FAB or sheet)
 
 ## Tech debt
 - Migrate to Next.js file-based routing (`/bundles/[id]`, `/items`)

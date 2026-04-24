@@ -26,14 +26,7 @@ const ItemRowPricingBreakdown: FC<Props> = ({
     <div>
       <p className="text-xs text-slate-500 dark:text-slate-400 mb-0.5">Cost allocated</p>
       <p className="text-sm font-semibold tabular-nums text-slate-900 dark:text-white">
-        {isInactive ? "—" : formatCurrency(totalCost)}
-      </p>
-    </div>
-
-    <div>
-      <p className="text-xs text-slate-500 dark:text-slate-400 mb-0.5">Break-even</p>
-      <p className="text-sm font-semibold tabular-nums text-slate-900 dark:text-white">
-        {isInactive ? "—" : formatCurrency(item.breakEvenPrice)}
+        {isInactive ? "-" : formatCurrency(totalCost)}
       </p>
     </div>
 
@@ -42,7 +35,7 @@ const ItemRowPricingBreakdown: FC<Props> = ({
         Min sale ({item.targetMarginPercent}%)
       </p>
       <p className="text-sm font-semibold tabular-nums text-amber-600 dark:text-amber-400">
-        {isInactive ? "—" : formatCurrency(item.minSalePrice)}
+        {isInactive ? "-" : formatCurrency(item.minSalePrice)}
       </p>
     </div>
 
@@ -67,7 +60,9 @@ const ItemRowPricingBreakdown: FC<Props> = ({
     {profit !== null && (
       <div>
         <p className="text-xs text-slate-500 dark:text-slate-400 mb-0.5">Net profit</p>
-        <p className={`text-sm font-semibold tabular-nums ${profit >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-red-500 dark:text-red-400"}`}>
+        <p
+          className={`text-sm font-semibold tabular-nums ${profit >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-red-500 dark:text-red-400"}`}
+        >
           {formatCurrency(profit)}
         </p>
       </div>
@@ -76,8 +71,11 @@ const ItemRowPricingBreakdown: FC<Props> = ({
     {roi !== null && (
       <div>
         <p className="text-xs text-slate-500 dark:text-slate-400 mb-0.5">ROI</p>
-        <p className={`text-sm font-semibold tabular-nums ${roi >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-red-500 dark:text-red-400"}`}>
-          {roi >= 0 ? "+" : ""}{roi.toFixed(1)}%
+        <p
+          className={`text-sm font-semibold tabular-nums ${roi >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-red-500 dark:text-red-400"}`}
+        >
+          {roi >= 0 ? "+" : ""}
+          {roi.toFixed(1)}%
         </p>
       </div>
     )}
@@ -112,9 +110,18 @@ const ItemRowPricingBreakdown: FC<Props> = ({
           {item.salePrice != null && ` · ${formatCurrency(item.salePrice)}`}
         </p>
         <Button size="sm" variant="danger" onClick={onUndoSale}>
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M9 14 4 9l5-5"/>
-            <path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/>
+          <svg
+            width="12"
+            height="12"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="M9 14 4 9l5-5" />
+            <path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11" />
           </svg>
           Undo sale
         </Button>

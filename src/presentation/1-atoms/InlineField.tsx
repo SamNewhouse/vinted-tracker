@@ -63,9 +63,7 @@ const InlineField: FC<InlineFieldProps> = ({
     <div>
       <p className="text-xs text-slate-500 dark:text-slate-400 mb-0.5">
         {label}
-        {!editing && (
-          <span className="ml-1 text-slate-300 dark:text-slate-600 text-xs">✎</span>
-        )}
+        {!editing && <span className="ml-1 text-slate-300 dark:text-slate-600 text-xs">✎</span>}
       </p>
       {editing ? (
         <div className="flex items-center gap-1">

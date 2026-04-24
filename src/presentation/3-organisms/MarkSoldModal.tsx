@@ -143,7 +143,7 @@ const MarkSoldModal: FC<Props> = ({ item, onClose }) => {
 
           {draftCosts.length === 0 && (
             <p className="text-xs text-slate-400 dark:text-slate-500 py-1">
-              No sale costs added — postage, platform fees, packaging, etc.
+              No sale costs added - postage, platform fees, packaging, etc.
             </p>
           )}
 

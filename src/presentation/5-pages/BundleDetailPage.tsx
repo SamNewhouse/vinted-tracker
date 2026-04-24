@@ -146,7 +146,7 @@ const BundleDetailPage: FC = () => {
       <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
         <SectionHeader
           title="Purchase Costs"
-          subtitle="Car boot entry, inbound postage, repair, cleaning etc — split equally across all items"
+          subtitle="Car boot entry, inbound postage, repair, cleaning etc - split equally across all items"
           action={
             <Button
               size="sm"

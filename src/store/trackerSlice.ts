@@ -47,8 +47,8 @@ export const initialState: TrackerState = {
 
 /**
  * Active = still in play, needs to recover cost.
- * Sold items are finished — their allocation is locked in at time of sale.
- * Unsellable/returned items are excluded — their cost burden moves to active items.
+ * Sold items are finished - their allocation is locked in at time of sale.
+ * Unsellable/returned items are excluded - their cost burden moves to active items.
  */
 function isActiveItem(item: Item): boolean {
   return item.status !== "unsellable" && item.status !== "returned" && item.status !== "sold";
@@ -58,10 +58,10 @@ function isActiveItem(item: Item): boolean {
  * Recalculates cost allocations for all non-sold items in a bundle.
  *
  * Rules:
- * - Sold items are FROZEN — their allocatedPurchaseCost is a historical record, never touched.
+ * - Sold items are FROZEN - their allocatedPurchaseCost is a historical record, never touched.
  * - The remaining unrecovered cost (total invested minus what sold items locked in) is split
  *   equally across active (unsold, sellable) items only.
- * - Unsellable/returned items get zero allocation — their share moves to active items.
+ * - Unsellable/returned items get zero allocation - their share moves to active items.
  * - If all remaining items are inactive, everything zeroes out.
  */
 function recalculateAllocations(
@@ -78,7 +78,7 @@ function recalculateAllocations(
   const totalExtraCosts = bundle.extraCosts.reduce((s, c) => s + c.amount, 0);
   const totalInvested = bundle.purchaseCost + totalExtraCosts;
 
-  // Subtract what sold items already locked in — we only need to recover the rest
+  // Subtract what sold items already locked in - we only need to recover the rest
   const lockedCost = soldItems.reduce(
     (s, i) => s + i.allocatedPurchaseCost + i.allocatedExtraCostShare,
     0,
@@ -88,7 +88,7 @@ function recalculateAllocations(
   // Split remaining cost across active unsold items only
   const perItemShare = activeItems.length > 0 ? remainingCost / activeItems.length : 0;
 
-  // Only recalculate unsold items — sold items are never touched
+  // Only recalculate unsold items - sold items are never touched
   for (const item of unsoldItems) {
     const active = isActiveItem(item);
     item.allocatedPurchaseCost = active ? perItemShare : 0;
@@ -132,7 +132,7 @@ const trackerSlice = createSlice({
         updatedAt: now,
       });
 
-      // Push draft items with temporary values — recalculate below corrects them
+      // Push draft items with temporary values - recalculate below corrects them
       for (const draft of draftItems) {
         state.items.push({
           id: uuidv4(),
@@ -184,7 +184,7 @@ const trackerSlice = createSlice({
         }
       }
 
-      // Recalculate if purchase cost changed — affects all unsold item allocations
+      // Recalculate if purchase cost changed - affects all unsold item allocations
       if (purchaseCost !== undefined) {
         recalculateAllocations(bundle, state.items, state.config.defaultMarginPercent);
       }
@@ -295,7 +295,7 @@ const trackerSlice = createSlice({
       item.saleCosts = action.payload.saleCosts.map((c) => ({ ...c, id: uuidv4() }));
       item.updatedAt = now;
 
-      // Recalculate remaining unsold items — they now share a smaller remaining cost
+      // Recalculate remaining unsold items - they now share a smaller remaining cost
       const bundle = state.bundles.find((b) => b.id === item.bundleId);
       if (bundle) recalculateAllocations(bundle, state.items, state.config.defaultMarginPercent);
     },
@@ -364,7 +364,7 @@ const trackerSlice = createSlice({
       state.config.defaultMarginPercent = action.payload;
 
       // Only update items whose margin was never manually overridden
-      // Sold items are frozen — never update their margin
+      // Sold items are frozen - never update their margin
       for (const item of state.items) {
         if (item.status !== "sold" && item.targetMarginPercent === oldDefault) {
           item.targetMarginPercent = action.payload;
