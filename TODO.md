@@ -20,6 +20,7 @@
 - Confirm dialog before delete (bundle + item)
 - Toast notifications on save/delete
 - Mobile - Add Bundle accessible from bottom nav (FAB or sheet)
+- new name / git repo
 
 ## Tech debt
 - Migrate to Next.js file-based routing (`/bundles/[id]`, `/items`)
