@@ -8,7 +8,7 @@ import Button from "../1-atoms/Button";
 import Input from "../1-atoms/Input";
 import Select from "../1-atoms/Select";
 import ItemRow from "../2-molecules/ItemRow";
-import type { FilterState, Item } from "../../types";
+import type { FilterState, Item, ItemStatus, SortDirection, SortField } from "../../types";
 import MarkSoldModal from "../3-organisms/MarkSoldModal";
 import EditItemModal from "../3-organisms/EditItemModal";
 
@@ -41,13 +41,13 @@ const ItemsPage: FC = () => {
         <div className="flex-1 min-w-48">
           <Input
             placeholder="Search items, bundles, sources..."
-            value={filters?.search ?? ""}
+            value={filters.search}
             onChange={(e) => dispatch(setFilter({ search: e.target.value }))}
           />
         </div>
         <Select
-          value={filters?.status ?? "all"}
-          onChange={(e) => dispatch(setFilter({ status: e.target.value as FilterState["status"] }))}
+          value={filters.status}
+          onChange={(e) => dispatch(setFilter({ status: e.target.value as ItemStatus | "all" }))}
           options={[
             { value: "all", label: "All statuses" },
             { value: "unlisted", label: "Unlisted" },
@@ -58,16 +58,16 @@ const ItemsPage: FC = () => {
           ]}
         />
         <Select
-          value={filters?.bundleId ?? "all"}
-          onChange={(e) => dispatch(setFilter({ bundleId: e.target.value }))}
+          value={filters.bundleId}
+          onChange={(e) => dispatch(setFilter({ bundleId: e.target.value as string }))}
           options={[
             { value: "all", label: "All bundles" },
             ...bundles.map((b) => ({ value: b.id, label: b.name })),
           ]}
         />
         <Select
-          value={filters?.sortField ?? "date"}
-          onChange={(e) => dispatch(setFilter({ sortField: e.target.value as FilterState["sortField"] }))}
+          value={filters.sortField}
+          onChange={(e) => dispatch(setFilter({ sortField: e.target.value as SortField }))}
           options={[
             { value: "date", label: "Sort: Date" },
             { value: "name", label: "Sort: Name" },
@@ -75,8 +75,8 @@ const ItemsPage: FC = () => {
           ]}
         />
         <Select
-          value={filters?.sortDirection ?? "desc"}
-          onChange={(e) => dispatch(setFilter({ sortDirection: e.target.value as "asc" | "desc" }))}
+          value={filters.sortDirection}
+          onChange={(e) => dispatch(setFilter({ sortDirection: e.target.value as SortDirection }))}
           options={[
             { value: "desc", label: "↓ Desc" },
             { value: "asc", label: "↑ Asc" },

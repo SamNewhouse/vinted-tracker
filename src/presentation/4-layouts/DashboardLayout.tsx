@@ -28,7 +28,8 @@ const DashboardLayout: FC<Props> = ({ children }) => {
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex">
       <button className="fixed bottom-0 right-0 p-3 m-3 bg-stone text-white rounded" onClick={() => {
         localStorage.removeItem("persist:vinted-tracker-root");
-        localStorage.removeItem("*");
+        localStorage.clear();
+        location.reload();
         window.location.reload();
       }}>
         Reset State

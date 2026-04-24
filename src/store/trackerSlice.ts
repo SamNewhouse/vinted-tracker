@@ -17,14 +17,23 @@ interface TrackerState {
   items: Item[];
   activeBundleId: string | null;
   view: ViewMode;
-  filters?: FilterState;
+  filters: FilterState;
 }
+
+const defaultFilters: FilterState = {
+  search: "",
+  status: "all",
+  bundleId: "all",
+  sortField: "date",
+  sortDirection: "desc",
+};
 
 export const initialState: TrackerState = {
   bundles: [],
   items: [],
   activeBundleId: null,
   view: "dashboard",
+  filters: defaultFilters,
 };
 
 const trackerSlice = createSlice({
@@ -79,7 +88,6 @@ const trackerSlice = createSlice({
         });
       }
 
-      // Recalculate now that extraCosts are on the bundle
       const newBundle = state.bundles.find((b) => b.id === bundleId)!;
       recalculateAllocations(newBundle, state.items);
 
@@ -264,11 +272,11 @@ const trackerSlice = createSlice({
     },
 
     setFilter(state, action: PayloadAction<Partial<FilterState>>) {
-      state.filters = { ...state.filters, ...action.payload } as FilterState;
+      state.filters = { ...state.filters, ...action.payload };
     },
 
     clearFilters(state) {
-      state.filters = undefined;
+      state.filters = defaultFilters;
     },
   },
   extraReducers: (builder) => {
@@ -277,7 +285,7 @@ const trackerSlice = createSlice({
         return {
           ...initialState,
           ...action.payload.tracker,
-          filters: undefined,
+          filters: defaultFilters,
         };
       }
       return initialState;
