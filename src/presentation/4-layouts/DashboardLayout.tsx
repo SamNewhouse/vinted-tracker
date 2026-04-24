@@ -30,18 +30,6 @@ const DashboardLayout: FC<Props> = ({ children }) => {
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex overflow-x-hidden">
-      {isDev && (
-        <button
-          className="fixed bottom-0 right-0 p-3 m-3 bg-stone text-white rounded z-50"
-          onClick={() => {
-            localStorage.clear();
-            location.reload();
-          }}
-        >
-          Reset State
-        </button>
-      )}
-
       {/* Sidebar - desktop only */}
       <aside className="hidden md:flex flex-col w-56 shrink-0 border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 h-screen sticky top-0">
         {/* Logo */}
