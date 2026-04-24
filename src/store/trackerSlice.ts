@@ -10,6 +10,7 @@ import {
   ViewMode,
   FilterState,
   AppConfig,
+  CostCategory,
 } from "../types";
 import { REHYDRATE } from "redux-persist";
 
@@ -40,6 +41,7 @@ export const initialState: TrackerState = {
   filters: defaultFilters,
   config: {
     defaultMarginPercent: 15,
+    defaultSaleCosts: [],
   },
 };
 
@@ -376,6 +378,13 @@ const trackerSlice = createSlice({
         recalculateAllocations(bundle, state.items, action.payload);
       }
     },
+
+    setDefaultSaleCosts(
+      state,
+      action: PayloadAction<{ category: CostCategory; amount: number }[]>,
+    ) {
+      state.config.defaultSaleCosts = action.payload;
+    },
   },
   extraReducers: (builder) => {
     builder.addCase(REHYDRATE, (_state, action: any) => {
@@ -407,6 +416,7 @@ export const {
   setFilter,
   clearFilters,
   setDefaultMargin,
+  setDefaultSaleCosts,
 } = trackerSlice.actions;
 
 export default trackerSlice.reducer;

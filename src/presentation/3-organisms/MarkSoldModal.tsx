@@ -1,6 +1,6 @@
 "use client";
 import { FC, memo, useState } from "react";
-import { useAppDispatch } from "../../store/hooks";
+import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import { markItemSold } from "../../store/trackerSlice";
 import { calcItemProfit, formatCurrency } from "../../utils/finance";
 import type { Item, CostCategory } from "../../types";
@@ -27,19 +27,27 @@ type DraftSaleCost = {
 const newDraftCost = (): DraftSaleCost => ({
   tempId: crypto.randomUUID(),
   category: "postage",
-  label: "Postage Out",
+  label: "Postage",
   amount: "",
 });
 
 const MarkSoldModal: FC<Props> = ({ item, onClose }) => {
   const dispatch = useAppDispatch();
+  const defaultSaleCosts = useAppSelector((s) => s.tracker.config.defaultSaleCosts) ?? [];
+
   const [salePrice, setSalePrice] = useState("");
   const [salePriceError, setSalePriceError] = useState("");
-  const [draftCosts, setDraftCosts] = useState<DraftSaleCost[]>([]);
+  const [draftCosts, setDraftCosts] = useState<DraftSaleCost[]>(() =>
+    defaultSaleCosts.map((c) => ({
+      tempId: crypto.randomUUID(),
+      category: c.category,
+      label: COST_CATEGORIES.find((cat) => cat.value === c.category)?.label ?? c.category,
+      amount: c.amount > 0 ? String(c.amount) : "",
+    }))
+  );
 
   const parsedPrice = parseFloat(salePrice);
 
-  // Only costs with a valid positive amount contribute to the preview/submit
   const activeCosts = draftCosts
     .map((c) => ({ ...c, amount: parseFloat(c.amount) }))
     .filter((c) => !isNaN(c.amount) && c.amount > 0);
@@ -67,10 +75,7 @@ const MarkSoldModal: FC<Props> = ({ item, onClose }) => {
 
   const handleCategoryChange = (tempId: string, category: CostCategory) => {
     const found = COST_CATEGORIES.find((c) => c.value === category);
-    updateCost(tempId, {
-      category,
-      label: found?.label ?? category,
-    });
+    updateCost(tempId, { category, label: found?.label ?? category });
   };
 
   const handleSubmit = (e: React.FormEvent) => {

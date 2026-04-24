@@ -156,6 +156,7 @@ export interface DashboardStats {
 
 export interface AppConfig {
   defaultMarginPercent: number;
+  defaultSaleCosts: { category: CostCategory; amount: number }[];
 }
 
 export type ViewMode =
