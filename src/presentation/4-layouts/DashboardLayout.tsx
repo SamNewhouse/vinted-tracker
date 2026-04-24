@@ -16,8 +16,6 @@ const navItems: { label: string; view: ViewMode; icon: string }[] = [
   // { label: "Analytics", view: "analytics", icon: "◧" },
 ];
 
-const isDev = typeof window !== "undefined" && window.location.hostname === "localhost";
-
 const DashboardLayout: FC<Props> = ({ children }) => {
   const dispatch = useAppDispatch();
   const currentView = useAppSelector((s) => s.tracker.view);
