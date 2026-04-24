@@ -113,7 +113,11 @@ const ItemRow: FC<Props> = ({
         </button>
 
         <div className="flex gap-4 shrink-0">
-          <span className="text-sm tabular-nums font-semibold text-amber-600 dark:text-amber-400 w-20 text-right">
+          <span className={`text-sm tabular-nums font-semibold w-20 text-right ${
+            item.status === "sold"
+              ? "text-blue-400 dark:text-blue-300"
+              : "text-amber-600 dark:text-amber-400"
+          }`}>
             {isInactive ? "-" : formatCurrency(item.minSalePrice)}
           </span>
           <span className="text-sm tabular-nums font-semibold text-emerald-600 dark:text-emerald-400 w-20 text-right">

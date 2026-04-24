@@ -78,26 +78,26 @@ function recalculateAllocations(
 
   const now = new Date().toISOString();
   const totalExtraCosts = bundle.extraCosts.reduce((s, c) => s + c.amount, 0);
-  const totalInvested = bundle.purchaseCost + totalExtraCosts;
 
-  // Subtract what sold items already locked in - we only need to recover the rest
-  const lockedCost = soldItems.reduce(
-    (s, i) => s + i.allocatedPurchaseCost + i.allocatedExtraCostShare,
-    0,
-  );
-  const remainingCost = Math.max(0, totalInvested - lockedCost);
+  // Recover remaining purchase cost (subtract what sold items locked in)
+  const lockedPurchaseCost = soldItems.reduce((s, i) => s + i.allocatedPurchaseCost, 0);
+  const remainingPurchaseCost = Math.max(0, bundle.purchaseCost - lockedPurchaseCost);
 
-  // Split remaining cost across active unsold items only
-  const perItemShare = activeItems.length > 0 ? remainingCost / activeItems.length : 0;
+  // Recover remaining extra costs (subtract what sold items locked in)
+  const lockedExtraCost = soldItems.reduce((s, i) => s + i.allocatedExtraCostShare, 0);
+  const remainingExtraCosts = Math.max(0, totalExtraCosts - lockedExtraCost);
 
-  // Only recalculate unsold items - sold items are never touched
+  const count = activeItems.length;
+  const perItemPurchase = count > 0 ? remainingPurchaseCost / count : 0;
+  const perItemExtra = count > 0 ? remainingExtraCosts / count : 0;
+
   for (const item of unsoldItems) {
     const active = isActiveItem(item);
-    item.allocatedPurchaseCost = active ? perItemShare : 0;
-    item.allocatedExtraCostShare = 0;
-    item.breakEvenPrice = active ? perItemShare : 0;
+    item.allocatedPurchaseCost = active ? perItemPurchase : 0;
+    item.allocatedExtraCostShare = active ? perItemExtra : 0;
+    item.breakEvenPrice = active ? perItemPurchase + perItemExtra : 0;
     item.minSalePrice = active
-      ? perItemShare * (1 + (item.targetMarginPercent ?? defaultMarginPercent) / 100)
+      ? item.breakEvenPrice * (1 + (item.targetMarginPercent ?? defaultMarginPercent) / 100)
       : 0;
     item.updatedAt = now;
   }
@@ -259,7 +259,7 @@ const trackerSlice = createSlice({
 
       // If margin changed, recalculate this item's minSalePrice immediately
       if (action.payload.changes.targetMarginPercent !== undefined) {
-        item.minSalePrice = item.breakEvenPrice * (1 + item.targetMarginPercent / 100);
+        item.marginOverridden = true;
       }
 
       // Recalculate bundle in case allocation-affecting fields changed
@@ -362,18 +362,14 @@ const trackerSlice = createSlice({
     // ── Config ───────────────────────────────────────────────
 
     setDefaultMargin(state, action: PayloadAction<number>) {
-      const oldDefault = state.config.defaultMarginPercent;
       state.config.defaultMarginPercent = action.payload;
 
-      // Only update items whose margin was never manually overridden
-      // Sold items are frozen - never update their margin
       for (const item of state.items) {
-        if (item.status !== "sold" && item.targetMarginPercent === oldDefault) {
+        if (item.status !== "sold" && !item.marginOverridden) {
           item.targetMarginPercent = action.payload;
         }
       }
 
-      // Recalculate all bundles with the new margin
       for (const bundle of state.bundles) {
         recalculateAllocations(bundle, state.items, action.payload);
       }

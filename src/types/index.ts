@@ -71,6 +71,7 @@ export interface Item {
 
   // ── Target margin ──
   targetMarginPercent: number;
+  marginOverridden?: boolean;
 
   // ── Sale-side costs ──
   saleCosts: ItemSaleCost[];
