@@ -37,7 +37,7 @@ const ItemRow: FC<Props> = ({
   const [expanded, setExpanded] = useState(false);
 
   const isInactive = item.status === "unsellable" || item.status === "returned";
-  const totalCost = item.allocatedPurchaseCost + item.allocatedExtraCostShare;
+  const totalCost = item.allocatedPurchaseCost + item.allocatedCostShare;
   const totalSaleCosts = item.saleCosts.reduce((s, c) => s + c.amount, 0);
 
   const profit =
@@ -45,7 +45,7 @@ const ItemRow: FC<Props> = ({
       ? calcItemProfit(
           item.salePrice,
           item.allocatedPurchaseCost,
-          item.allocatedExtraCostShare,
+          item.allocatedCostShare,
           item.saleCosts,
         )
       : null;
@@ -76,6 +76,13 @@ const ItemRow: FC<Props> = ({
 
   const undoSale = () => dispatch(markItemStatus({ itemId: item.id, status: "listed" }));
 
+  const handleBundleClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (item.bundleId) {
+      onBundleClick?.(item.bundleId);
+    }
+  };
+
   return (
     <div className="border-b border-slate-100 dark:border-slate-800 last:border-0">
       {/* Main row */}
@@ -94,15 +101,17 @@ const ItemRow: FC<Props> = ({
             </span>
             <Badge label={item.status} status={statusVariant[item.status]} />
           </div>
-          {showBundle && (
+          {showBundle && item.bundleId && (
             <span
-              onClick={(e) => {
-                e.stopPropagation();
-                onBundleClick?.(item.bundleId);
-              }}
+              onClick={handleBundleClick}
               className="text-xs text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 mt-0.5 ml-4 cursor-pointer transition-colors"
             >
-              {item.bundleName} →
+              {item.source} →
+            </span>
+          )}
+          {showBundle && !item.bundleId && (
+            <span className="text-xs text-slate-400 dark:text-slate-500 mt-0.5 ml-4">
+              Standalone
             </span>
           )}
           {item.description && (

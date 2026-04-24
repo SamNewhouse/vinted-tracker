@@ -2,7 +2,7 @@
 import { FC, memo, useState } from "react";
 import { useAppDispatch } from "../../store/hooks";
 import { addBundle, setView } from "../../store/trackerSlice";
-import type { DraftItem, DraftCost, BundleSource } from "../../types";
+import type { DraftItem, Cost, Source } from "../../types";
 import Button from "../1-atoms/Button";
 import Input from "../1-atoms/Input";
 import Textarea from "../1-atoms/Textarea";
@@ -15,12 +15,12 @@ const AddBundleForm: FC = () => {
   const dispatch = useAppDispatch();
 
   const [name, setName] = useState("");
-  const [source, setSource] = useState<BundleSource>("vinted");
+  const [source, setSource] = useState<Source>("vinted");
   const [purchaseCost, setPurchaseCost] = useState("");
   const [purchaseDate, setPurchaseDate] = useState(new Date().toISOString().split("T")[0]);
   const [notes, setNotes] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [draftCosts, setDraftCosts] = useState<DraftCost[]>([]);
+  const [draftCosts, setDraftCosts] = useState<Cost[]>([]);
   const [draftItems, setDraftItems] = useState<DraftItem[]>([]);
 
   const validate = () => {
@@ -46,15 +46,11 @@ const AddBundleForm: FC = () => {
       addBundle({
         bundle: {
           name: name.trim(),
-          source: source,
+          source,
           purchaseCost: Number(purchaseCost),
           purchaseDate,
           notes: notes.trim() || undefined,
-          extraCosts: draftCosts.map(({ amount, label, category }) => ({
-            amount,
-            label,
-            category,
-          })),
+          costs: draftCosts,
         },
         draftItems,
       }),
@@ -88,7 +84,7 @@ const AddBundleForm: FC = () => {
         <Select
           label="Source"
           value={source}
-          onChange={(e) => setSource(e.target.value as BundleSource)}
+          onChange={(e) => setSource(e.target.value as Source)}
           options={SOURCES}
           error={errors.source}
         />
@@ -117,14 +113,14 @@ const AddBundleForm: FC = () => {
           items={draftItems}
           error={errors.items}
           onAdd={(item) => setDraftItems((prev) => [...prev, item])}
-          onRemove={(tempId) => setDraftItems((prev) => prev.filter((i) => i.tempId !== tempId))}
+          onRemove={(id) => setDraftItems((prev) => prev.filter((i) => i.id !== id))}
         />
 
         <DraftCostList
           costs={draftCosts}
           totalInvested={totalInvested}
           onAdd={(cost) => setDraftCosts((prev) => [...prev, cost])}
-          onRemove={(tempId) => setDraftCosts((prev) => prev.filter((c) => c.tempId !== tempId))}
+          onRemove={(id) => setDraftCosts((prev) => prev.filter((c) => c.id !== id))}
         />
 
         <Textarea
@@ -134,7 +130,6 @@ const AddBundleForm: FC = () => {
           onChange={(e) => setNotes(e.target.value)}
         />
 
-        {/* Live cost summary */}
         <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50 px-4 py-3 space-y-1.5 text-sm">
           <div className="flex justify-between text-slate-500 dark:text-slate-400">
             <span>Purchase cost</span>

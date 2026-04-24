@@ -4,17 +4,18 @@ import {
   Bundle,
   Item,
   ItemStatus,
-  ItemSaleCost,
-  BundleExtraCost,
+  Cost,
   DraftItem,
   ViewMode,
   FilterState,
   AppConfig,
-  CostCategory,
+  Source,
 } from "../types";
 import { REHYDRATE } from "redux-persist";
 
+
 // ── State ────────────────────────────────────────────────────
+
 
 interface TrackerState {
   bundles: Bundle[];
@@ -25,6 +26,7 @@ interface TrackerState {
   config: AppConfig;
 }
 
+
 const defaultFilters: FilterState = {
   search: "",
   status: "all",
@@ -32,6 +34,7 @@ const defaultFilters: FilterState = {
   sortField: "date",
   sortDirection: "desc",
 };
+
 
 export const initialState: TrackerState = {
   bundles: [],
@@ -45,25 +48,23 @@ export const initialState: TrackerState = {
   },
 };
 
+
 // ── Helpers ──────────────────────────────────────────────────
 
-/**
- * Active = still in play, needs to recover cost.
- * Sold items are finished - their allocation is locked in at time of sale.
- * Unsellable/returned items are excluded - their cost burden moves to active items.
- */
+
 function isActiveItem(item: Item): boolean {
   return item.status !== "unsellable" && item.status !== "returned" && item.status !== "sold";
 }
+
 
 /**
  * Recalculates cost allocations for all non-sold items in a bundle.
  *
  * Rules:
- * - Sold items are FROZEN - their allocatedPurchaseCost is a historical record, never touched.
+ * - Sold items are FROZEN — their allocatedPurchaseCost is a historical record, never touched.
  * - The remaining unrecovered cost (total invested minus what sold items locked in) is split
  *   equally across active (unsold, sellable) items only.
- * - Unsellable/returned items get zero allocation - their share moves to active items.
+ * - Unsellable/returned items get zero allocation — their share moves to active items.
  * - If all remaining items are inactive, everything zeroes out.
  */
 function recalculateAllocations(
@@ -77,15 +78,13 @@ function recalculateAllocations(
   const activeItems = unsoldItems.filter(isActiveItem);
 
   const now = new Date().toISOString();
-  const totalExtraCosts = bundle.extraCosts.reduce((s, c) => s + c.amount, 0);
+  const totalExtraCosts = bundle.costs.reduce((s, c) => s + c.amount, 0);
 
-  // Recover remaining purchase cost (subtract what sold items locked in)
   const lockedPurchaseCost = soldItems.reduce((s, i) => s + i.allocatedPurchaseCost, 0);
   const remainingPurchaseCost = Math.max(0, bundle.purchaseCost - lockedPurchaseCost);
 
-  // Recover remaining extra costs (subtract what sold items locked in)
-  const lockedExtraCost = soldItems.reduce((s, i) => s + i.allocatedExtraCostShare, 0);
-  const remainingExtraCosts = Math.max(0, totalExtraCosts - lockedExtraCost);
+  const lockedCostShare = soldItems.reduce((s, i) => s + i.allocatedCostShare, 0);
+  const remainingExtraCosts = Math.max(0, totalExtraCosts - lockedCostShare);
 
   const count = activeItems.length;
   const perItemPurchase = count > 0 ? remainingPurchaseCost / count : 0;
@@ -94,7 +93,8 @@ function recalculateAllocations(
   for (const item of unsoldItems) {
     const active = isActiveItem(item);
     item.allocatedPurchaseCost = active ? perItemPurchase : 0;
-    item.allocatedExtraCostShare = active ? perItemExtra : 0;
+    item.allocatedCostShare = active ? perItemExtra : 0;
+    item.purchaseCost = active ? perItemPurchase : 0;
     item.breakEvenPrice = active ? perItemPurchase + perItemExtra : 0;
     item.minSalePrice = active
       ? item.breakEvenPrice * (1 + (item.targetMarginPercent ?? defaultMarginPercent) / 100)
@@ -103,7 +103,23 @@ function recalculateAllocations(
   }
 }
 
+
+/**
+ * Recalculates prices for a standalone item in-place.
+ */
+function recalculateStandalone(item: Item, defaultMarginPercent: number): void {
+  const totalCosts = item.costs.reduce((s, c) => s + c.amount, 0);
+  item.breakEvenPrice = item.purchaseCost + totalCosts;
+  item.allocatedPurchaseCost = item.purchaseCost;
+  item.allocatedCostShare = totalCosts;
+  item.minSalePrice =
+    item.breakEvenPrice * (1 + (item.targetMarginPercent ?? defaultMarginPercent) / 100);
+  item.updatedAt = new Date().toISOString();
+}
+
+
 // ── Slice ────────────────────────────────────────────────────
+
 
 const trackerSlice = createSlice({
   name: "tracker",
@@ -111,11 +127,12 @@ const trackerSlice = createSlice({
   reducers: {
     // ── Bundles ──────────────────────────────────────────────
 
+
     addBundle(
       state,
       action: PayloadAction<{
-        bundle: Omit<Bundle, "id" | "createdAt" | "updatedAt" | "extraCosts"> & {
-          extraCosts: Omit<BundleExtraCost, "id">[];
+        bundle: Omit<Bundle, "id" | "createdAt" | "updatedAt" | "costs"> & {
+          costs: Omit<Cost, "id">[];
         };
         draftItems: DraftItem[];
       }>,
@@ -129,27 +146,27 @@ const trackerSlice = createSlice({
       state.bundles.push({
         ...bundle,
         id: bundleId,
-        extraCosts: bundle.extraCosts.map((c) => ({ ...c, id: uuidv4() })),
+        costs: bundle.costs.map((c) => ({ ...c, id: uuidv4() })),
         createdAt: now,
         updatedAt: now,
       });
 
-      // Push draft items with temporary values - recalculate below corrects them
       for (const draft of draftItems) {
         state.items.push({
           id: uuidv4(),
           bundleId,
-          bundleName: bundle.name,
-          bundleSource: bundle.source,
+          source: bundle.source,
           purchaseDate: bundle.purchaseDate,
+          purchaseCost: perItemPurchaseCost,
           name: draft.name,
           description: draft.description,
           notes: draft.notes,
           allocatedPurchaseCost: perItemPurchaseCost,
-          allocatedExtraCostShare: 0,
+          allocatedCostShare: 0,
           targetMarginPercent: state.config.defaultMarginPercent,
           breakEvenPrice: perItemPurchaseCost,
           minSalePrice: 0,
+          costs: [],
           saleCosts: [],
           status: "unlisted",
           createdAt: now,
@@ -164,33 +181,32 @@ const trackerSlice = createSlice({
       state.view = "bundle-detail";
     },
 
+
     updateBundle(
       state,
       action: PayloadAction<{
         id: string;
-        changes: Partial<Omit<Bundle, "id" | "createdAt" | "extraCosts">>;
+        changes: Partial<Omit<Bundle, "id" | "createdAt" | "costs">>;
       }>,
     ) {
       const bundle = state.bundles.find((b) => b.id === action.payload.id);
       if (!bundle) return;
       Object.assign(bundle, action.payload.changes, { updatedAt: new Date().toISOString() });
 
-      // Keep denormalised item fields in sync
-      const { name, source, purchaseDate, purchaseCost } = action.payload.changes;
-      if (name !== undefined || source !== undefined || purchaseDate !== undefined) {
+      const { source, purchaseDate, purchaseCost } = action.payload.changes;
+      if (source !== undefined || purchaseDate !== undefined) {
         for (const item of state.items.filter((i) => i.bundleId === bundle.id)) {
-          if (name !== undefined) item.bundleName = name;
-          if (source !== undefined) item.bundleSource = source;
+          if (source !== undefined) item.source = source;
           if (purchaseDate !== undefined) item.purchaseDate = purchaseDate;
           item.updatedAt = new Date().toISOString();
         }
       }
 
-      // Recalculate if purchase cost changed - affects all unsold item allocations
       if (purchaseCost !== undefined) {
         recalculateAllocations(bundle, state.items, state.config.defaultMarginPercent);
       }
     },
+
 
     deleteBundle(state, action: PayloadAction<string>) {
       state.bundles = state.bundles.filter((b) => b.id !== action.payload);
@@ -201,8 +217,14 @@ const trackerSlice = createSlice({
       }
     },
 
+
     // ── Items ────────────────────────────────────────────────
 
+
+    /**
+     * Add a single item to an existing bundle.
+     * For adding multiple items at once to an existing bundle, use addBundleItems.
+     */
     addItem(
       state,
       action: PayloadAction<{
@@ -220,17 +242,18 @@ const trackerSlice = createSlice({
       state.items.push({
         id: uuidv4(),
         bundleId: bundle.id,
-        bundleName: bundle.name,
-        bundleSource: bundle.source,
+        source: bundle.source,
         purchaseDate: bundle.purchaseDate,
+        purchaseCost: 0,
         name: action.payload.name,
         description: action.payload.description,
         notes: action.payload.notes,
         allocatedPurchaseCost: 0,
-        allocatedExtraCostShare: 0,
+        allocatedCostShare: 0,
         targetMarginPercent: state.config.defaultMarginPercent,
         breakEvenPrice: 0,
         minSalePrice: 0,
+        costs: [],
         saleCosts: [],
         status: "unlisted",
         createdAt: now,
@@ -240,6 +263,94 @@ const trackerSlice = createSlice({
       bundle.updatedAt = now;
       recalculateAllocations(bundle, state.items, state.config.defaultMarginPercent);
     },
+
+
+    /**
+     * Add multiple items at once to an existing bundle.
+     * Used when a user wants to bulk-add items to a bundle after it's been created.
+     */
+    addBundleItems(
+      state,
+      action: PayloadAction<{
+        bundleId: string;
+        draftItems: DraftItem[];
+      }>,
+    ) {
+      const bundle = state.bundles.find((b) => b.id === action.payload.bundleId);
+      if (!bundle) return;
+
+      const now = new Date().toISOString();
+
+      for (const draft of action.payload.draftItems) {
+        state.items.push({
+          id: uuidv4(),
+          bundleId: bundle.id,
+          source: bundle.source,
+          purchaseDate: bundle.purchaseDate,
+          purchaseCost: 0,
+          name: draft.name,
+          description: draft.description,
+          notes: draft.notes,
+          allocatedPurchaseCost: 0,
+          allocatedCostShare: 0,
+          targetMarginPercent: state.config.defaultMarginPercent,
+          breakEvenPrice: 0,
+          minSalePrice: 0,
+          costs: [],
+          saleCosts: [],
+          status: "unlisted",
+          createdAt: now,
+          updatedAt: now,
+        });
+      }
+
+      bundle.updatedAt = now;
+      recalculateAllocations(bundle, state.items, state.config.defaultMarginPercent);
+    },
+
+
+    addStandaloneItem(
+      state,
+      action: PayloadAction<{
+        name: string;
+        source: Source;
+        purchaseDate: string;
+        purchaseCost: number;
+        description?: string;
+        notes?: string;
+        costs?: Omit<Cost, "id">[];
+      }>,
+    ) {
+      const now = new Date().toISOString();
+      const { name, source, purchaseDate, purchaseCost, description, notes, costs = [] } =
+        action.payload;
+      const resolvedCosts = costs.map((c) => ({ ...c, id: uuidv4() }));
+      const totalCosts = resolvedCosts.reduce((s, c) => s + c.amount, 0);
+      const breakEven = purchaseCost + totalCosts;
+      const minSale = breakEven * (1 + state.config.defaultMarginPercent / 100);
+
+      state.items.push({
+        id: uuidv4(),
+        bundleId: undefined,
+        source,
+        purchaseDate,
+        purchaseCost,
+        name,
+        description,
+        notes,
+        allocatedPurchaseCost: purchaseCost,
+        allocatedCostShare: totalCosts,
+        breakEvenPrice: breakEven,
+        minSalePrice: minSale,
+        targetMarginPercent: state.config.defaultMarginPercent,
+        costs: resolvedCosts,
+        saleCosts: [],
+        status: "unlisted",
+        createdAt: now,
+        updatedAt: now,
+      });
+    },
+
 
     updateItem(
       state,
@@ -257,20 +368,25 @@ const trackerSlice = createSlice({
       if (!item) return;
       Object.assign(item, action.payload.changes, { updatedAt: new Date().toISOString() });
 
-      // If margin changed, recalculate this item's minSalePrice immediately
       if (action.payload.changes.targetMarginPercent !== undefined) {
         item.marginOverridden = true;
       }
 
-      // Recalculate bundle in case allocation-affecting fields changed
-      const bundle = state.bundles.find((b) => b.id === item.bundleId);
-      if (bundle) recalculateAllocations(bundle, state.items, state.config.defaultMarginPercent);
+      if (item.bundleId) {
+        const bundle = state.bundles.find((b) => b.id === item.bundleId);
+        if (bundle) recalculateAllocations(bundle, state.items, state.config.defaultMarginPercent);
+      } else {
+        recalculateStandalone(item, state.config.defaultMarginPercent);
+      }
     },
+
 
     deleteItem(state, action: PayloadAction<string>) {
       const item = state.items.find((i) => i.id === action.payload);
       if (!item) return;
-      const bundle = state.bundles.find((b) => b.id === item.bundleId);
+      const bundle = item.bundleId
+        ? state.bundles.find((b) => b.id === item.bundleId)
+        : undefined;
       state.items = state.items.filter((i) => i.id !== action.payload);
       if (bundle) {
         bundle.updatedAt = new Date().toISOString();
@@ -278,36 +394,37 @@ const trackerSlice = createSlice({
       }
     },
 
+
     markItemSold(
       state,
       action: PayloadAction<{
         itemId: string;
         salePrice: number;
-        saleCosts: Omit<ItemSaleCost, "id">[];
+        saleCosts: Cost[];
       }>,
     ) {
       const item = state.items.find((i) => i.id === action.payload.itemId);
       if (!item) return;
       const now = new Date().toISOString();
 
-      // Lock in the allocation at current values before freezing
       item.status = "sold";
       item.salePrice = action.payload.salePrice;
       item.soldAt = now;
-      item.saleCosts = action.payload.saleCosts.map((c) => ({ ...c, id: uuidv4() }));
+      item.saleCosts = action.payload.saleCosts;
       item.updatedAt = now;
 
-      // Recalculate remaining unsold items - they now share a smaller remaining cost
-      const bundle = state.bundles.find((b) => b.id === item.bundleId);
-      if (bundle) recalculateAllocations(bundle, state.items, state.config.defaultMarginPercent);
+      if (item.bundleId) {
+        const bundle = state.bundles.find((b) => b.id === item.bundleId);
+        if (bundle) recalculateAllocations(bundle, state.items, state.config.defaultMarginPercent);
+      }
     },
+
 
     markItemStatus(state, action: PayloadAction<{ itemId: string; status: ItemStatus }>) {
       const item = state.items.find((i) => i.id === action.payload.itemId);
       if (!item) return;
       item.status = action.payload.status;
 
-      // Clear sale data if moving out of sold status
       if (action.payload.status !== "sold") {
         item.salePrice = undefined;
         item.soldAt = undefined;
@@ -315,98 +432,129 @@ const trackerSlice = createSlice({
       }
       item.updatedAt = new Date().toISOString();
 
-      // Redistribution: status change affects the active pool
-      const bundle = state.bundles.find((b) => b.id === item.bundleId);
-      if (bundle) recalculateAllocations(bundle, state.items, state.config.defaultMarginPercent);
+      if (item.bundleId) {
+        const bundle = state.bundles.find((b) => b.id === item.bundleId);
+        if (bundle) recalculateAllocations(bundle, state.items, state.config.defaultMarginPercent);
+      }
     },
 
-    // ── Bundle Extra Costs ───────────────────────────────────
 
-    addBundleExtraCost(
+    // ── Bundle Costs ─────────────────────────────────────────
+
+
+    addBundleCost(
       state,
-      action: PayloadAction<{ bundleId: string; cost: Omit<BundleExtraCost, "id"> }>,
+      action: PayloadAction<{ bundleId: string; cost: Omit<Cost, "id"> }>,
     ) {
       const bundle = state.bundles.find((b) => b.id === action.payload.bundleId);
       if (!bundle) return;
-      bundle.extraCosts.push({ ...action.payload.cost, id: uuidv4() });
+      bundle.costs.push({ ...action.payload.cost, id: uuidv4() });
       bundle.updatedAt = new Date().toISOString();
       recalculateAllocations(bundle, state.items, state.config.defaultMarginPercent);
     },
 
-    deleteBundleExtraCost(state, action: PayloadAction<{ bundleId: string; costId: string }>) {
+
+    deleteBundleCost(state, action: PayloadAction<{ bundleId: string; costId: string }>) {
       const bundle = state.bundles.find((b) => b.id === action.payload.bundleId);
       if (!bundle) return;
-      bundle.extraCosts = bundle.extraCosts.filter((c) => c.id !== action.payload.costId);
+      bundle.costs = bundle.costs.filter((c) => c.id !== action.payload.costId);
       bundle.updatedAt = new Date().toISOString();
       recalculateAllocations(bundle, state.items, state.config.defaultMarginPercent);
     },
 
+
     // ── UI State ─────────────────────────────────────────────
+
 
     setView(state, action: PayloadAction<ViewMode>) {
       state.view = action.payload;
     },
 
+
     setActiveBundleId(state, action: PayloadAction<string | null>) {
       state.activeBundleId = action.payload;
     },
+
 
     setFilter(state, action: PayloadAction<Partial<FilterState>>) {
       state.filters = { ...state.filters, ...action.payload };
     },
 
+
     clearFilters(state) {
       state.filters = defaultFilters;
     },
 
+
     // ── Config ───────────────────────────────────────────────
+
 
     setDefaultMargin(state, action: PayloadAction<number>) {
       state.config.defaultMarginPercent = action.payload;
 
+      // Update targetMarginPercent on all non-sold, non-overridden items
       for (const item of state.items) {
         if (item.status !== "sold" && !item.marginOverridden) {
           item.targetMarginPercent = action.payload;
         }
       }
 
+      // Recalculate bundle items
       for (const bundle of state.bundles) {
         recalculateAllocations(bundle, state.items, action.payload);
       }
+
+      // Recalculate standalone items
+      for (const item of state.items) {
+        if (!item.bundleId && item.status !== "sold" && !item.marginOverridden) {
+          recalculateStandalone(item, action.payload);
+        }
+      }
     },
 
-    setDefaultSaleCosts(
-      state,
-      action: PayloadAction<{ category: CostCategory; amount: number }[]>,
-    ) {
+
+    setDefaultSaleCosts(state, action: PayloadAction<Cost[]>) {
       state.config.defaultSaleCosts = action.payload;
     },
   },
   extraReducers: (builder) => {
     builder.addCase(REHYDRATE, (_state, action: any) => {
       if (action.key === "vinted-tracker-root" && action.payload?.tracker) {
-        return {
-          ...initialState,
-          ...action.payload.tracker,
-          filters: defaultFilters,
-        };
+        const tracker = action.payload.tracker;
+        const items = (tracker.items ?? []).map((item: any) => ({
+          ...item,
+          source: item.source ?? item.bundleSource ?? "other",
+          purchaseCost: item.purchaseCost ?? item.allocatedPurchaseCost ?? 0,
+          allocatedCostShare: item.allocatedCostShare ?? item.allocatedExtraCostShare ?? 0,
+          costs: item.costs ?? [],
+          saleCosts: item.saleCosts ?? [],
+          bundleId: item.bundleId ?? undefined,
+        }));
+        const bundles = (tracker.bundles ?? []).map((bundle: any) => ({
+          ...bundle,
+          costs: bundle.costs ?? bundle.extraCosts ?? [],
+        }));
+        return { ...initialState, ...tracker, items, bundles, filters: defaultFilters };
       }
       return initialState;
     });
   },
 });
 
+
 export const {
   addBundle,
   updateBundle,
   deleteBundle,
   addItem,
+  addBundleItems,
+  addStandaloneItem,
   updateItem,
   deleteItem,
   markItemSold,
   markItemStatus,
-  addBundleExtraCost,
-  deleteBundleExtraCost,
+  addBundleCost,
+  deleteBundleCost,
   setView,
   setActiveBundleId,
   setFilter,
@@ -414,5 +562,6 @@ export const {
   setDefaultMargin,
   setDefaultSaleCosts,
 } = trackerSlice.actions;
+
 
 export default trackerSlice.reducer;

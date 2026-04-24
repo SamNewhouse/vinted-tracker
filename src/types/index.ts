@@ -9,7 +9,7 @@ export type ItemStatus = "unlisted" | "listed" | "sold" | "returned" | "unsellab
 /** Visual status variants for the Badge atom */
 export type BundleStatus = "success" | "warning" | "error" | "neutral" | "info" | "profit" | "loss";
 
-export type BundleSource =
+export type Source =
   | "vinted"
   | "car_boot"
   | "facebook_marketplace"
@@ -29,16 +29,9 @@ export type CostCategory =
   | "packaging"
   | "other_purchase";
 
-// ── Extra Costs ───────────────────────────────────────────────
+// ── Costs ─────────────────────────────────────────────────────
 
-export interface BundleExtraCost {
-  id: string;
-  label: string;
-  category: CostCategory;
-  amount: number;
-}
-
-export interface ItemSaleCost {
+export interface Cost {
   id: string;
   label: string;
   category: CostCategory;
@@ -49,40 +42,26 @@ export interface ItemSaleCost {
 
 export interface Item {
   id: string;
-  bundleId: string;
-
-  // ── Bundle context (denormalised at creation) ──
-  bundleName: string;
-  bundleSource: BundleSource;
+  bundleId?: string;
+  source: Source;
   purchaseDate: string;
-
-  // ── Identity ──
+  purchaseCost: number; // direct cost for standalone; allocated share for bundle items
   name: string;
   description?: string;
   notes?: string;
-
-  // ── Acquisition cost (recalculated when bundle costs change) ──
   allocatedPurchaseCost: number;
-  allocatedExtraCostShare: number;
-
-  // ── Derived pricing (stored so components can read without recalculating) ──
-  breakEvenPrice: number; // allocatedPurchaseCost + allocatedExtraCostShare
-  minSalePrice: number; // breakEvenPrice * (1 + targetMarginPercent / 100)
-
-  // ── Target margin ──
+  allocatedCostShare: number;
+  breakEvenPrice: number;
+  minSalePrice: number;
   targetMarginPercent: number;
   marginOverridden?: boolean;
-
-  // ── Sale-side costs ──
-  saleCosts: ItemSaleCost[];
-
-  // ── Sale ──
+  costs: Cost[];      // acquisition costs (standalone only); empty for bundle items
+  saleCosts: Cost[];  // costs incurred when selling
   status: ItemStatus;
   listedAt?: string;
   listedPrice?: number;
   soldAt?: string;
   salePrice?: number;
-
   createdAt: string;
   updatedAt: string;
 }
@@ -92,10 +71,10 @@ export interface Item {
 export interface Bundle {
   id: string;
   name: string;
-  source: BundleSource;
+  source: Source;
   purchaseDate: string;
   purchaseCost: number;
-  extraCosts: BundleExtraCost[];
+  costs: Cost[];
   notes?: string;
   createdAt: string;
   updatedAt: string;
@@ -104,17 +83,10 @@ export interface Bundle {
 // ── Draft types (form state only, never persisted) ────────────
 
 export interface DraftItem {
-  tempId: string;
+  id: string;
   name: string;
   description?: string;
   notes?: string;
-}
-
-export interface DraftCost {
-  tempId: string;
-  label: string;
-  category: CostCategory;
-  amount: number;
 }
 
 // ── Computed / View types (never persisted) ───────────────────
@@ -157,16 +129,17 @@ export interface DashboardStats {
 
 export interface AppConfig {
   defaultMarginPercent: number;
-  defaultSaleCosts: { category: CostCategory; amount: number }[];
+  defaultSaleCosts: Cost[];
 }
 
 export type ViewMode =
   | "dashboard"
-  | "bundles"
   | "items"
-  | "settings"
-  | "bundle-detail"
+  | "add-item"
+  | "bundles"
   | "add-bundle"
+  | "bundle-detail"
+  | "settings"
   | "analytics";
 
 export type SortField = "date" | "profit" | "spend" | "revenue" | "name" | "roi";

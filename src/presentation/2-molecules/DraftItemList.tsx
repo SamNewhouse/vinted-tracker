@@ -1,5 +1,6 @@
 import { FC, memo, useState } from "react";
 import type { DraftItem } from "../../types";
+import { v4 as uuidv4 } from "uuid";
 import Button from "../1-atoms/Button";
 import Input from "../1-atoms/Input";
 
@@ -7,7 +8,7 @@ interface Props {
   items: DraftItem[];
   error?: string;
   onAdd: (item: DraftItem) => void;
-  onRemove: (tempId: string) => void;
+  onRemove: (id: string) => void;
 }
 
 const DraftItemList: FC<Props> = ({ items, error, onAdd, onRemove }) => {
@@ -22,7 +23,7 @@ const DraftItemList: FC<Props> = ({ items, error, onAdd, onRemove }) => {
       return;
     }
     onAdd({
-      tempId: `${Date.now()}-${Math.random()}`,
+      id: uuidv4(),
       name: name.trim(),
       description: description.trim() || undefined,
     });
@@ -55,7 +56,7 @@ const DraftItemList: FC<Props> = ({ items, error, onAdd, onRemove }) => {
       {items.length > 0 && (
         <ul className="divide-y divide-slate-100 dark:divide-slate-800">
           {items.map((item) => (
-            <li key={item.tempId} className="flex items-center justify-between px-4 py-2.5 text-sm">
+            <li key={item.id} className="flex items-center justify-between px-4 py-2.5 text-sm">
               <div>
                 <span className="font-medium text-slate-800 dark:text-slate-200">{item.name}</span>
                 {item.description && (
@@ -64,7 +65,7 @@ const DraftItemList: FC<Props> = ({ items, error, onAdd, onRemove }) => {
               </div>
               <button
                 type="button"
-                onClick={() => onRemove(item.tempId)}
+                onClick={() => onRemove(item.id)}
                 className="text-slate-400 hover:text-red-500 transition-colors text-xs"
                 aria-label="Remove item"
               >

@@ -3,8 +3,9 @@ import { FC, memo, useState } from "react";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import { markItemSold } from "../../store/trackerSlice";
 import { calcItemProfit, formatCurrency } from "../../utils/finance";
-import type { Item, CostCategory } from "../../types";
+import type { Item, Cost, CostCategory } from "../../types";
 import { COST_CATEGORIES } from "../../config/constants";
+import { v4 as uuidv4 } from "uuid";
 import Button from "../1-atoms/Button";
 import Input from "../1-atoms/Input";
 import Select from "../1-atoms/Select";
@@ -18,14 +19,14 @@ interface Props {
 }
 
 type DraftSaleCost = {
-  tempId: string;
+  id: string;
   category: CostCategory;
   label: string;
-  amount: string;
+  amount: string; // string for controlled input, parsed on submit
 };
 
 const newDraftCost = (): DraftSaleCost => ({
-  tempId: crypto.randomUUID(),
+  id: uuidv4(),
   category: "postage",
   label: "Postage",
   amount: "",
@@ -39,7 +40,7 @@ const MarkSoldModal: FC<Props> = ({ item, onClose }) => {
   const [salePriceError, setSalePriceError] = useState("");
   const [draftCosts, setDraftCosts] = useState<DraftSaleCost[]>(() =>
     defaultSaleCosts.map((c) => ({
-      tempId: crypto.randomUUID(),
+      id: uuidv4(),
       category: c.category,
       label: COST_CATEGORIES.find((cat) => cat.value === c.category)?.label ?? c.category,
       amount: c.amount > 0 ? String(c.amount) : "",
@@ -57,25 +58,20 @@ const MarkSoldModal: FC<Props> = ({ item, onClose }) => {
       ? calcItemProfit(
           parsedPrice,
           item.allocatedPurchaseCost,
-          item.allocatedExtraCostShare,
-          activeCosts.map(({ category, label, amount }) => ({
-            id: "",
-            category,
-            label,
-            amount,
-          })),
+          item.allocatedCostShare,
+          activeCosts.map(({ id, category, label, amount }): Cost => ({ id, category, label, amount })),
         )
       : null;
 
-  const updateCost = (tempId: string, changes: Partial<DraftSaleCost>) =>
-    setDraftCosts((prev) => prev.map((c) => (c.tempId === tempId ? { ...c, ...changes } : c)));
+  const updateCost = (id: string, changes: Partial<DraftSaleCost>) =>
+    setDraftCosts((prev) => prev.map((c) => (c.id === id ? { ...c, ...changes } : c)));
 
-  const removeCost = (tempId: string) =>
-    setDraftCosts((prev) => prev.filter((c) => c.tempId !== tempId));
+  const removeCost = (id: string) =>
+    setDraftCosts((prev) => prev.filter((c) => c.id !== id));
 
-  const handleCategoryChange = (tempId: string, category: CostCategory) => {
+  const handleCategoryChange = (id: string, category: CostCategory) => {
     const found = COST_CATEGORIES.find((c) => c.value === category);
-    updateCost(tempId, { category, label: found?.label ?? category });
+    updateCost(id, { category, label: found?.label ?? category });
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -88,7 +84,8 @@ const MarkSoldModal: FC<Props> = ({ item, onClose }) => {
       markItemSold({
         itemId: item.id,
         salePrice: parsedPrice,
-        saleCosts: activeCosts.map(({ category, label, amount }) => ({
+        saleCosts: activeCosts.map(({ id, category, label, amount }): Cost => ({
+          id,
           category,
           label,
           amount,
@@ -101,7 +98,6 @@ const MarkSoldModal: FC<Props> = ({ item, onClose }) => {
   return (
     <Modal title={`Mark "${item.name}" as Sold`} onClose={onClose}>
       <form onSubmit={handleSubmit} className="space-y-4">
-        {/* Reference pricing */}
         <div className="grid grid-cols-2 gap-3">
           <ValueCell
             label="Break-even"
@@ -115,7 +111,6 @@ const MarkSoldModal: FC<Props> = ({ item, onClose }) => {
           />
         </div>
 
-        {/* Sale price */}
         <Input
           label="Sale Price"
           type="number"
@@ -131,7 +126,6 @@ const MarkSoldModal: FC<Props> = ({ item, onClose }) => {
           error={salePriceError}
         />
 
-        {/* Sale costs */}
         <div className="space-y-2">
           <div className="flex items-center justify-between">
             <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
@@ -153,12 +147,12 @@ const MarkSoldModal: FC<Props> = ({ item, onClose }) => {
           )}
 
           {draftCosts.map((cost) => (
-            <div key={cost.tempId} className="flex items-center gap-2">
+            <div key={cost.id} className="flex items-center gap-2">
               <div className="flex-1">
                 <Select
                   value={cost.category}
                   onChange={(e) =>
-                    handleCategoryChange(cost.tempId, e.target.value as CostCategory)
+                    handleCategoryChange(cost.id, e.target.value as CostCategory)
                   }
                   options={COST_CATEGORIES.map((c) => ({ value: c.value, label: c.label }))}
                 />
@@ -171,12 +165,12 @@ const MarkSoldModal: FC<Props> = ({ item, onClose }) => {
                   placeholder="0.00"
                   prefix="£"
                   value={cost.amount}
-                  onChange={(e) => updateCost(cost.tempId, { amount: e.target.value })}
+                  onChange={(e) => updateCost(cost.id, { amount: e.target.value })}
                 />
               </div>
               <button
                 type="button"
-                onClick={() => removeCost(cost.tempId)}
+                onClick={() => removeCost(cost.id)}
                 className="text-slate-400 hover:text-red-500 dark:hover:text-red-400 transition-colors text-lg leading-none pb-0.5"
                 aria-label="Remove cost"
               >
@@ -186,7 +180,6 @@ const MarkSoldModal: FC<Props> = ({ item, onClose }) => {
           ))}
         </div>
 
-        {/* Profit preview */}
         {previewProfit !== null && (
           <div className="flex items-center justify-between rounded-lg bg-slate-50 dark:bg-slate-800/50 px-4 py-3">
             <span className="text-sm text-slate-500 dark:text-slate-400">Net profit</span>

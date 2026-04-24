@@ -6,9 +6,9 @@ import {
   selectActiveBundleItems,
   selectBundleSummary,
 } from "../../store/selectors";
-import { deleteItem, deleteBundleExtraCost, setView } from "../../store/trackerSlice";
+import { deleteItem, deleteBundleCost, setView } from "../../store/trackerSlice";
 import { formatCurrency, formatPercent } from "../../utils/finance";
-import type { Item, BundleExtraCost } from "../../types";
+import type { Item, Cost } from "../../types";
 import Button from "../1-atoms/Button";
 import Badge from "../1-atoms/Badge";
 import ValueCell from "../1-atoms/ValueCell";
@@ -47,7 +47,7 @@ const BundleDetailPage: FC = () => {
   const allItems = useAppSelector((state) => state.tracker.items);
   const summary = selectBundleSummary(bundle, allItems);
 
-  const totalExtraCosts = bundle.extraCosts.reduce((s, c) => s + c.amount, 0);
+  const totalExtraCosts = bundle.costs.reduce((s, c) => s + c.amount, 0);
 
   return (
     <div className="space-y-6">
@@ -162,17 +162,17 @@ const BundleDetailPage: FC = () => {
         />
 
         <div className="px-5">
-          {bundle.extraCosts.length === 0 ? (
+          {bundle.costs.length === 0 ? (
             <div className="py-10 text-center text-slate-400 dark:text-slate-500 text-sm">
               No purchase costs yet.
             </div>
           ) : (
-            bundle.extraCosts.map((cost: BundleExtraCost) => (
+            bundle.costs.map((cost: Cost) => (
               <ExtraCostRow
                 key={cost.id}
                 cost={cost}
                 onDelete={(id) =>
-                  dispatch(deleteBundleExtraCost({ bundleId: bundle.id, costId: id }))
+                  dispatch(deleteBundleCost({ bundleId: bundle.id, costId: id }))
                 }
               />
             ))

@@ -1,7 +1,7 @@
 "use client";
 import { FC, memo, useState } from "react";
 import { useAppDispatch } from "../../store/hooks";
-import { addBundleExtraCost } from "../../store/trackerSlice";
+import { addBundleCost } from "../../store/trackerSlice";
 import type { CostCategory } from "../../types";
 import Input from "../1-atoms/Input";
 import Button from "../1-atoms/Button";
@@ -32,7 +32,7 @@ const AddExtraCostForm: FC<Props> = ({ bundleId, onClose }) => {
       label.trim() || COST_CATEGORIES.find((c) => c.value === category)?.label || "Extra cost";
 
     dispatch(
-      addBundleExtraCost({
+      addBundleCost({
         bundleId,
         cost: { label: autoLabel, category, amount: Number(amount) },
       }),

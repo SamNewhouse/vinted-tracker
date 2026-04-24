@@ -2,8 +2,9 @@
 import { FC, memo, useState } from "react";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import { setDefaultMargin, setDefaultSaleCosts } from "../../store/trackerSlice";
-import type { CostCategory } from "../../types";
+import type { Cost, CostCategory } from "../../types";
 import { COST_CATEGORIES } from "../../config/constants";
+import { v4 as uuidv4 } from "uuid";
 
 const SettingsPage: FC = () => {
   const dispatch = useAppDispatch();
@@ -11,7 +12,7 @@ const SettingsPage: FC = () => {
   const defaultSaleCosts = useAppSelector((s) => s.tracker.config.defaultSaleCosts) ?? [];
 
   const [value, setValue] = useState(String(defaultMarginPercent));
-  const [localCosts, setLocalCosts] = useState(defaultSaleCosts);
+  const [localCosts, setLocalCosts] = useState<Cost[]>(defaultSaleCosts);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState("");
 
@@ -102,7 +103,7 @@ const SettingsPage: FC = () => {
                 const meta = COST_CATEGORIES.find((c) => c.value === cost.category);
                 if (!meta) return null;
                 return (
-                  <div key={cost.category} className="flex items-center gap-3">
+                  <div key={cost.id} className="flex items-center gap-3">
                     <span className="text-sm text-slate-700 dark:text-slate-300 flex-1">
                       {meta.label}
                     </span>
@@ -139,7 +140,12 @@ const SettingsPage: FC = () => {
               value=""
               onChange={(e) => {
                 const cat = e.target.value as CostCategory;
-                setLocalCosts([...localCosts, { category: cat, amount: 0 }]);
+                const label =
+                  COST_CATEGORIES.find((c) => c.value === cat)?.label ?? cat;
+                setLocalCosts([
+                  ...localCosts,
+                  { id: uuidv4(), label, category: cat, amount: 0 },
+                ]);
               }}
               className="text-sm bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-1.5 text-slate-500 dark:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-900 dark:focus:ring-white"
             >

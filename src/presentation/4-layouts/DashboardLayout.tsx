@@ -25,7 +25,8 @@ const DashboardLayout: FC<Props> = ({ children }) => {
   const isActive = (view: ViewMode) =>
     currentView === view ||
     (currentView === "bundle-detail" && view === "bundles") ||
-    (currentView === "add-bundle" && view === "bundles");
+    (currentView === "add-bundle" && view === "bundles") ||
+    (currentView === "add-item" && view === "items");
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex">
@@ -79,13 +80,19 @@ const DashboardLayout: FC<Props> = ({ children }) => {
           ))}
         </nav>
 
-        {/* Add Bundle CTA */}
-        <div className="p-3 border-t border-slate-100 dark:border-slate-800">
+        {/* CTAs */}
+        <div className="p-3 border-t border-slate-100 dark:border-slate-800 space-y-2">
           <button
             onClick={() => dispatch(setView("add-bundle"))}
             className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg border-2 border-dashed border-slate-300 dark:border-slate-700 text-sm text-slate-500 dark:text-slate-400 hover:border-slate-900 dark:hover:border-white hover:text-slate-900 dark:hover:text-white transition-all"
           >
             + Add Bundle
+          </button>
+          <button
+            onClick={() => dispatch(setView("add-item"))}
+            className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg border-2 border-dashed border-slate-300 dark:border-slate-700 text-sm text-slate-500 dark:text-slate-400 hover:border-slate-900 dark:hover:border-white hover:text-slate-900 dark:hover:text-white transition-all"
+          >
+            + Add Item
           </button>
         </div>
       </aside>

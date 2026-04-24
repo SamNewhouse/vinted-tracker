@@ -8,6 +8,7 @@ import BundleDetailPage from "./BundleDetailPage";
 import AddBundleForm from "../3-organisms/AddBundleForm";
 import ItemsPage from "./ItemsPage";
 import SettingsPage from "./SettingsPage";
+import AddItemForm from "../3-organisms/AddItemForm";
 
 const HomePage: FC = () => {
   const view = useAppSelector((s) => s.tracker.view);
@@ -26,6 +27,8 @@ const HomePage: FC = () => {
         return <BundleDetailPage />;
       case "add-bundle":
         return <AddBundleForm />;
+      case "add-item":
+        return <AddItemForm />;
       case "analytics":
         return (
           <div className="flex flex-col items-center justify-center py-20 text-center">

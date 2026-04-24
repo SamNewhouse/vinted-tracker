@@ -23,6 +23,9 @@ const ItemsPage: FC = () => {
   const items = useAppSelector(selectFilteredItems);
   const filters = useAppSelector((s) => s.tracker.filters);
   const bundles = useAppSelector((s) => s.tracker.bundles);
+  const allItems = useAppSelector((s) => s.tracker.items);
+
+  const hasStandalone = allItems.some((i) => !i.bundleId);
 
   const [soldItem, setSoldItem] = useState<Item | null>(null);
   const [editItem, setEditItem] = useState<Item | null>(null);
@@ -37,16 +40,21 @@ const ItemsPage: FC = () => {
             {items.length} item{items.length !== 1 ? "s" : ""}
           </p>
         </div>
-        <Button size="sm" variant="secondary" onClick={() => dispatch(clearFilters())}>
-          Clear filters
-        </Button>
+        <div className="flex gap-2">
+          <Button size="sm" variant="secondary" onClick={() => dispatch(setView("add-item"))}>
+            + Add Item
+          </Button>
+          <Button size="sm" variant="ghost" onClick={() => dispatch(clearFilters())}>
+            Clear filters
+          </Button>
+        </div>
       </div>
 
       {/* Filter bar */}
       <div className="flex flex-wrap gap-3">
         <div className="flex-1 min-w-48">
           <Input
-            placeholder="Search items, bundles, sources..."
+            placeholder="Search items..."
             value={filters.search}
             onChange={(e) => dispatch(setFilter({ search: e.target.value }))}
           />
@@ -65,9 +73,10 @@ const ItemsPage: FC = () => {
         />
         <Select
           value={filters.bundleId}
-          onChange={(e) => dispatch(setFilter({ bundleId: e.target.value as string }))}
+          onChange={(e) => dispatch(setFilter({ bundleId: e.target.value }))}
           options={[
-            { value: "all", label: "All bundles" },
+            { value: "all", label: "All items" },
+            ...(hasStandalone ? [{ value: "standalone", label: "Standalone" }] : []),
             ...bundles.map((b) => ({ value: b.id, label: b.name })),
           ]}
         />
@@ -116,7 +125,12 @@ const ItemsPage: FC = () => {
             <EmptyState
               icon="📦"
               title="No items found"
-              description="Try adjusting your filters, or add items via a bundle."
+              description="Try adjusting your filters, or add a standalone item or bundle."
+              action={
+                <Button size="sm" onClick={() => dispatch(setView("add-item"))}>
+                  + Add Item
+                </Button>
+              }
             />
           ) : (
             items.map((item) => (

@@ -1,16 +1,17 @@
 "use client";
 import { FC, memo, useState } from "react";
-import type { DraftCost, CostCategory } from "../../types";
+import type { Cost, CostCategory } from "../../types";
 import Button from "../1-atoms/Button";
 import Input from "../1-atoms/Input";
 import Select from "../1-atoms/Select";
 import { COST_CATEGORIES } from "../../config/constants";
+import { v4 as uuidv4 } from "uuid";
 
 interface Props {
-  costs: DraftCost[];
+  costs: Cost[];
   totalInvested: number;
-  onAdd: (cost: DraftCost) => void;
-  onRemove: (tempId: string) => void;
+  onAdd: (cost: Cost) => void;
+  onRemove: (id: string) => void;
 }
 
 const DraftCostList: FC<Props> = ({ costs, totalInvested, onAdd, onRemove }) => {
@@ -30,7 +31,7 @@ const DraftCostList: FC<Props> = ({ costs, totalInvested, onAdd, onRemove }) => 
     }
     const autoLabel =
       label.trim() || COST_CATEGORIES.find((c) => c.value === category)?.label || "Extra cost";
-    onAdd({ tempId: `${Date.now()}`, label: autoLabel, category, amount: parsed });
+    onAdd({ id: uuidv4(), label: autoLabel, category, amount: parsed });
     setLabel("");
     setCategory("postage");
     setAmount("");
@@ -59,7 +60,7 @@ const DraftCostList: FC<Props> = ({ costs, totalInvested, onAdd, onRemove }) => 
       {costs.length > 0 && (
         <ul className="divide-y divide-slate-100 dark:divide-slate-800">
           {costs.map((c) => (
-            <li key={c.tempId} className="flex items-center justify-between px-4 py-2.5 text-sm">
+            <li key={c.id} className="flex items-center justify-between px-4 py-2.5 text-sm">
               <div>
                 <span className="font-medium text-slate-800 dark:text-slate-200">{c.label}</span>
                 <span className="ml-2 text-xs text-slate-400">
@@ -72,7 +73,7 @@ const DraftCostList: FC<Props> = ({ costs, totalInvested, onAdd, onRemove }) => 
                 </span>
                 <button
                   type="button"
-                  onClick={() => onRemove(c.tempId)}
+                  onClick={() => onRemove(c.id)}
                   className="text-slate-400 hover:text-red-500 transition-colors text-xs"
                   aria-label="Remove cost"
                 >
