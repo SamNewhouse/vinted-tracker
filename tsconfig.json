@@ -13,7 +13,9 @@
     "lib": ["dom", "dom.iterable", "esnext"],
     "noEmit": true,
     "allowJs": false,
-    "plugins": [{ "name": "next" }]
+    "plugins": [{ "name": "next" }],
+    "noUnusedLocals": true,
+    "noUnusedParameters": true
   },
   "include": [
     "next-env.d.ts",

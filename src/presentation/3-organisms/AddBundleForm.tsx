@@ -2,18 +2,20 @@
 import { FC, memo, useState } from "react";
 import { useAppDispatch } from "../../store/hooks";
 import { addBundle, setView } from "../../store/trackerSlice";
-import type { DraftItem, DraftCost } from "../../types";
+import type { DraftItem, DraftCost, BundleSource } from "../../types";
 import Button from "../1-atoms/Button";
 import Input from "../1-atoms/Input";
 import Textarea from "../1-atoms/Textarea";
 import DraftCostList from "../2-molecules/DraftCostList";
 import DraftItemList from "../2-molecules/DraftItemList";
+import Select from "../1-atoms/Select";
+import { SOURCES } from "../../config/constants";
 
 const AddBundleForm: FC = () => {
   const dispatch = useAppDispatch();
 
   const [name, setName] = useState("");
-  const [source, setSource] = useState("");
+  const [source, setSource] = useState<BundleSource>("vinted");
   const [purchaseCost, setPurchaseCost] = useState("");
   const [purchaseDate, setPurchaseDate] = useState(new Date().toISOString().split("T")[0]);
   const [notes, setNotes] = useState("");
@@ -40,12 +42,11 @@ const AddBundleForm: FC = () => {
       return;
     }
 
-    // Single dispatch — slice handles bundle + item creation atomically
-    const bundleId = dispatch(
+    dispatch(
       addBundle({
         bundle: {
           name: name.trim(),
-          source: source.trim(),
+          source: source,
           purchaseCost: Number(purchaseCost),
           purchaseDate,
           notes: notes.trim() || undefined,
@@ -59,9 +60,6 @@ const AddBundleForm: FC = () => {
       }),
     );
 
-    // addBundle returns the new bundle's ID via the action payload creator
-    // Navigate to the new bundle's detail view
-    // Note: since addBundle is synchronous (no thunk), the bundle exists immediately
     dispatch(setView("bundle-detail"));
   };
 
@@ -82,16 +80,16 @@ const AddBundleForm: FC = () => {
       <form onSubmit={handleSubmit} className="space-y-4">
         <Input
           label="Bundle Name"
-          placeholder="e.g. Car boot haul – 12 Apr"
+          placeholder="e.g. Vinted bundle - 3 tshirts, 2 jumpers"
           value={name}
           onChange={(e) => setName(e.target.value)}
           error={errors.name}
         />
-        <Input
+        <Select
           label="Source"
-          placeholder="e.g. Car boot – Wigan, Charity shop, Vinted"
           value={source}
-          onChange={(e) => setSource(e.target.value)}
+          onChange={(e) => setSource(e.target.value as BundleSource)}
+          options={SOURCES}
           error={errors.source}
         />
         <div className="grid grid-cols-2 gap-4">
@@ -115,7 +113,6 @@ const AddBundleForm: FC = () => {
           />
         </div>
 
-        {/* Items defined upfront */}
         <DraftItemList
           items={draftItems}
           error={errors.items}
@@ -123,7 +120,6 @@ const AddBundleForm: FC = () => {
           onRemove={(tempId) => setDraftItems((prev) => prev.filter((i) => i.tempId !== tempId))}
         />
 
-        {/* Purchase-side costs */}
         <DraftCostList
           costs={draftCosts}
           totalInvested={totalInvested}
@@ -137,6 +133,22 @@ const AddBundleForm: FC = () => {
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
         />
+
+        {/* Live cost summary */}
+        <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50 px-4 py-3 space-y-1.5 text-sm">
+          <div className="flex justify-between text-slate-500 dark:text-slate-400">
+            <span>Purchase cost</span>
+            <span className="tabular-nums">£{(Number(purchaseCost) || 0).toFixed(2)}</span>
+          </div>
+          <div className="flex justify-between text-slate-500 dark:text-slate-400">
+            <span>Upfront costs</span>
+            <span className="tabular-nums">£{totalExtraCosts.toFixed(2)}</span>
+          </div>
+          <div className="flex justify-between font-semibold text-slate-900 dark:text-white border-t border-slate-200 dark:border-slate-700 pt-1.5 mt-1">
+            <span>Total invested</span>
+            <span className="tabular-nums">£{totalInvested.toFixed(2)}</span>
+          </div>
+        </div>
 
         <div className="flex gap-3 pt-2">
           <Button type="submit" fullWidth>

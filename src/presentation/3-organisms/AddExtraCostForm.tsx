@@ -16,7 +16,7 @@ interface Props {
 const AddExtraCostForm: FC<Props> = ({ bundleId, onClose }) => {
   const dispatch = useAppDispatch();
   const [label, setLabel] = useState("");
-  const [category, setCategory] = useState<CostCategory>("car_boot_entry");
+  const [category, setCategory] = useState<CostCategory>("admission");
   const [amount, setAmount] = useState("");
   const [amountError, setAmountError] = useState("");
 

@@ -9,9 +9,20 @@ export type ItemStatus = "unlisted" | "listed" | "sold" | "returned" | "unsellab
 /** Visual status variants for the Badge atom */
 export type BundleStatus = "success" | "warning" | "error" | "neutral" | "info" | "profit" | "loss";
 
+export type BundleSource =
+  | "vinted"
+  | "car_boot"
+  | "facebook_marketplace"
+  | "charity_shop"
+  | "ebay"
+  | "depop"
+  | "jumble_sale"
+  | "gumtree"
+  | "other";
+
 export type CostCategory =
-  | "car_boot_entry"
   | "postage"
+  | "admission"
   | "travel"
   | "cleaning"
   | "parking"
@@ -42,7 +53,7 @@ export interface Item {
 
   // ── Bundle context (denormalised at creation) ──
   bundleName: string;
-  bundleSource: string;
+  bundleSource: BundleSource;
   purchaseDate: string;
 
   // ── Identity ──
@@ -80,7 +91,7 @@ export interface Item {
 export interface Bundle {
   id: string;
   name: string;
-  source: string;
+  source: BundleSource;
   purchaseDate: string;
   purchaseCost: number;
   extraCosts: BundleExtraCost[];
@@ -103,13 +114,6 @@ export interface DraftCost {
   label: string;
   category: CostCategory;
   amount: number;
-}
-
-/** Used in COST_CATEGORIES constant */
-export interface CostCategoryOption {
-  value: CostCategory;
-  label: string;
-  hint: string;
 }
 
 // ── Computed / View types (never persisted) ───────────────────

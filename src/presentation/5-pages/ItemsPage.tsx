@@ -14,7 +14,7 @@ import Button from "../1-atoms/Button";
 import Input from "../1-atoms/Input";
 import Select from "../1-atoms/Select";
 import ItemRow from "../2-molecules/ItemRow";
-import type { FilterState, Item, ItemStatus, SortDirection, SortField } from "../../types";
+import type { Item, ItemStatus, SortDirection, SortField } from "../../types";
 import MarkSoldModal from "../3-organisms/MarkSoldModal";
 import EditItemModal from "../3-organisms/EditItemModal";
 

@@ -16,7 +16,7 @@ interface Props {
 const DraftCostList: FC<Props> = ({ costs, totalInvested, onAdd, onRemove }) => {
   const [showForm, setShowForm] = useState(false);
   const [label, setLabel] = useState("");
-  const [category, setCategory] = useState<CostCategory>("car_boot_entry");
+  const [category, setCategory] = useState<CostCategory>("postage");
   const [amount, setAmount] = useState("");
   const [costError, setCostError] = useState("");
 
@@ -32,7 +32,7 @@ const DraftCostList: FC<Props> = ({ costs, totalInvested, onAdd, onRemove }) => 
       label.trim() || COST_CATEGORIES.find((c) => c.value === category)?.label || "Extra cost";
     onAdd({ tempId: `${Date.now()}`, label: autoLabel, category, amount: parsed });
     setLabel("");
-    setCategory("car_boot_entry");
+    setCategory("postage");
     setAmount("");
     setCostError("");
     setShowForm(false);
@@ -119,7 +119,7 @@ const DraftCostList: FC<Props> = ({ costs, totalInvested, onAdd, onRemove }) => 
             />
           </div>
           <div className="text-xs text-slate-400 pt-0.5">
-            Total invested: £{totalInvested.toFixed(2)}
+            Total invested: £{(totalInvested + (Number(amount) || 0)).toFixed(2)}
           </div>
           <div className="flex gap-2">
             <Button type="button" size="sm" onClick={handleAdd}>

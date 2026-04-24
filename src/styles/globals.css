@@ -43,6 +43,12 @@ h4,
   background: oklch(0.5 0 0 / 0.5);
 }
 
+input[type="date"]::-webkit-calendar-picker-indicator {
+  opacity: 0.3;
+  filter: invert(1); /* makes it white on dark backgrounds */
+  cursor: pointer;
+}
+
 @layer base {
   *,
   ::after,
