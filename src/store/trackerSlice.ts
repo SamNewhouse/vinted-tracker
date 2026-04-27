@@ -15,7 +15,7 @@ import { REHYDRATE } from "redux-persist";
 
 // ── State ────────────────────────────────────────────────────
 
-interface TrackerState {
+export interface TrackerState {
   bundles: Bundle[];
   items: Item[];
   activeBundleId: string | null;
@@ -486,6 +486,35 @@ const trackerSlice = createSlice({
     setDefaultSaleCosts(state, action: PayloadAction<Cost[]>) {
       state.config.defaultSaleCosts = action.payload;
     },
+
+    replaceData(
+      state,
+      action: PayloadAction<{ bundles: Bundle[]; items: Item[]; config: AppConfig }>,
+    ) {
+      state.bundles = action.payload.bundles;
+      state.items = action.payload.items;
+      state.config = action.payload.config;
+      state.activeBundleId = null;
+      state.view = "dashboard";
+      state.filters = defaultFilters;
+    },
+
+    mergeData(state, action: PayloadAction<{ bundles: Bundle[]; items: Item[] }>) {
+      const existingBundleIds = new Set(state.bundles.map((b) => b.id));
+      const existingItemIds = new Set(state.items.map((i) => i.id));
+
+      for (const bundle of action.payload.bundles) {
+        if (!existingBundleIds.has(bundle.id)) {
+          state.bundles.push(bundle);
+        }
+      }
+
+      for (const item of action.payload.items) {
+        if (!existingItemIds.has(item.id)) {
+          state.items.push(item);
+        }
+      }
+    },
   },
   extraReducers: (builder) => {
     builder.addCase(REHYDRATE, (_state, action: any) => {
@@ -530,6 +559,8 @@ export const {
   clearFilters,
   setDefaultMargin,
   setDefaultSaleCosts,
+  replaceData,
+  mergeData,
 } = trackerSlice.actions;
 
 export default trackerSlice.reducer;
