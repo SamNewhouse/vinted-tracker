@@ -6,7 +6,7 @@ import {
   selectActiveBundleItems,
   selectBundleSummary,
 } from "../../store/selectors";
-import { deleteItem, deleteBundleCost, setView } from "../../store/trackerSlice";
+import { deleteItem, deleteBundleCost, setView, openAdd } from "../../store/trackerSlice";
 import { formatCurrency, formatPercent } from "../../utils/finance";
 import type { Item, Cost } from "../../types";
 import Button from "../1-atoms/Button";
@@ -16,8 +16,6 @@ import ProfitValue from "../1-atoms/ProfitValue";
 import SectionHeader from "../1-atoms/SectionHeader";
 import EmptyState from "../1-atoms/EmptyState";
 import ExtraCostRow from "../2-molecules/CostRow";
-import AddItemForm from "../3-organisms/AddItemForm";
-import AddExtraCostForm from "../3-organisms/AddCostForm";
 import MarkSoldModal from "../3-organisms/MarkSoldModal";
 import EditItemModal from "../3-organisms/EditItemModal";
 import ItemTable from "../2-molecules/ItemTable";
@@ -26,8 +24,6 @@ const BundleDetailPage: FC = () => {
   const dispatch = useAppDispatch();
   const bundle = useAppSelector(selectActiveBundle);
   const items = useAppSelector(selectActiveBundleItems);
-  const [showAddItem, setShowAddItem] = useState(false);
-  const [showAddCost, setShowAddCost] = useState(false);
   const [soldItem, setSoldItem] = useState<Item | null>(null);
   const [editItem, setEditItem] = useState<Item | null>(null);
 
@@ -110,10 +106,7 @@ const BundleDetailPage: FC = () => {
             <Button
               size="sm"
               variant="secondary"
-              onClick={() => {
-                setShowAddItem(true);
-                setShowAddCost(false);
-              }}
+              onClick={() => dispatch(openAdd({ tab: "item", bundleId: bundle.id }))}
             >
               + Add Item
             </Button>
@@ -134,12 +127,6 @@ const BundleDetailPage: FC = () => {
             />
           )}
         </div>
-
-        {showAddItem && (
-          <div className="px-5 pb-5">
-            <AddItemForm bundleId={bundle.id} onClose={() => setShowAddItem(false)} />
-          </div>
-        )}
       </div>
 
       {/* Purchase extra costs section */}
@@ -151,10 +138,7 @@ const BundleDetailPage: FC = () => {
             <Button
               size="sm"
               variant="secondary"
-              onClick={() => {
-                setShowAddCost(true);
-                setShowAddItem(false);
-              }}
+              onClick={() => dispatch(openAdd({ tab: "expense", bundleId: bundle.id }))}
             >
               + Add Cost
             </Button>
@@ -176,12 +160,6 @@ const BundleDetailPage: FC = () => {
             ))
           )}
         </div>
-
-        {showAddCost && (
-          <div className="px-5 pb-5">
-            <AddExtraCostForm bundleId={bundle.id} onClose={() => setShowAddCost(false)} />
-          </div>
-        )}
       </div>
 
       {/* Notes */}

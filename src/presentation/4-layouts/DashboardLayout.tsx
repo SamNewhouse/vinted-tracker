@@ -12,6 +12,7 @@ const navItems: { label: string; view: ViewMode; icon: string }[] = [
   { label: "Dashboard", view: "dashboard", icon: "◈" },
   { label: "Items", view: "items", icon: "▤" },
   { label: "Bundles", view: "bundles", icon: "◻" },
+  { label: "Add", view: "add", icon: "+" },
   { label: "Settings", view: "settings", icon: "⚙\uFE0E" },
   // { label: "Analytics", view: "analytics", icon: "◧" },
 ];
@@ -21,10 +22,7 @@ const DashboardLayout: FC<Props> = ({ children }) => {
   const currentView = useAppSelector((s) => s.tracker.view);
 
   const isActive = (view: ViewMode) =>
-    currentView === view ||
-    (currentView === "bundle-detail" && view === "bundles") ||
-    (currentView === "add-bundle" && view === "bundles") ||
-    (currentView === "add-item" && view === "items");
+    currentView === view || (currentView === "bundle-detail" && view === "bundles");
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex overflow-x-hidden">
@@ -66,22 +64,6 @@ const DashboardLayout: FC<Props> = ({ children }) => {
             </button>
           ))}
         </nav>
-
-        {/* CTAs */}
-        <div className="p-3 border-t border-slate-100 dark:border-slate-800 space-y-2">
-          <button
-            onClick={() => dispatch(setView("add-item"))}
-            className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg border-2 border-dashed border-slate-300 dark:border-slate-700 text-sm text-slate-500 dark:text-slate-400 hover:border-slate-900 dark:hover:border-white hover:text-slate-900 dark:hover:text-white transition-all"
-          >
-            + Add Item
-          </button>
-          <button
-            onClick={() => dispatch(setView("add-bundle"))}
-            className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg border-2 border-dashed border-slate-300 dark:border-slate-700 text-sm text-slate-500 dark:text-slate-400 hover:border-slate-900 dark:hover:border-white hover:text-slate-900 dark:hover:text-white transition-all"
-          >
-            + Add Bundle
-          </button>
-        </div>
       </aside>
 
       {/* Main */}

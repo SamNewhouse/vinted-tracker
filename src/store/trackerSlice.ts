@@ -10,6 +10,7 @@ import {
   FilterState,
   AppConfig,
   Source,
+  AddTab,
 } from "../types";
 import { REHYDRATE } from "redux-persist";
 
@@ -22,6 +23,7 @@ export interface TrackerState {
   view: ViewMode;
   filters: FilterState;
   config: AppConfig;
+  addTarget: { tab: AddTab; bundleId: string | null };
 }
 
 const defaultFilters: FilterState = {
@@ -38,6 +40,7 @@ export const initialState: TrackerState = {
   activeBundleId: null,
   view: "dashboard",
   filters: defaultFilters,
+  addTarget: { tab: "item", bundleId: null },
   config: {
     defaultMarginPercent: 15,
     defaultSaleCosts: [],
@@ -205,49 +208,6 @@ const trackerSlice = createSlice({
     },
 
     // ── Items ────────────────────────────────────────────────
-
-    /**
-     * Add a single item to an existing bundle.
-     * For adding multiple items at once to an existing bundle, use addBundleItems.
-     */
-    addItem(
-      state,
-      action: PayloadAction<{
-        bundleId: string;
-        name: string;
-        description?: string;
-        notes?: string;
-      }>,
-    ) {
-      const bundle = state.bundles.find((b) => b.id === action.payload.bundleId);
-      if (!bundle) return;
-
-      const now = new Date().toISOString();
-
-      state.items.push({
-        id: uuidv4(),
-        bundleId: bundle.id,
-        source: bundle.source,
-        purchaseDate: bundle.purchaseDate,
-        purchaseCost: 0,
-        name: action.payload.name,
-        description: action.payload.description,
-        notes: action.payload.notes,
-        allocatedPurchaseCost: 0,
-        allocatedCostShare: 0,
-        targetMarginPercent: state.config.defaultMarginPercent,
-        breakEvenPrice: 0,
-        minSalePrice: 0,
-        costs: [],
-        saleCosts: [],
-        status: "unlisted",
-        createdAt: now,
-        updatedAt: now,
-      });
-
-      bundle.updatedAt = now;
-      recalculateAllocations(bundle, state.items, state.config.defaultMarginPercent);
-    },
 
     /**
      * Add multiple items at once to an existing bundle.
@@ -446,6 +406,12 @@ const trackerSlice = createSlice({
       state.view = action.payload;
     },
 
+    /** Opens the Add page on a tab, optionally with a bundle already chosen. */
+    openAdd(state, action: PayloadAction<{ tab: AddTab; bundleId?: string }>) {
+      state.addTarget = { tab: action.payload.tab, bundleId: action.payload.bundleId ?? null };
+      state.view = "add";
+    },
+
     setActiveBundleId(state, action: PayloadAction<string | null>) {
       state.activeBundleId = action.payload;
     },
@@ -544,7 +510,6 @@ export const {
   addBundle,
   updateBundle,
   deleteBundle,
-  addItem,
   addBundleItems,
   addStandaloneItem,
   updateItem,
@@ -554,6 +519,7 @@ export const {
   addBundleCost,
   deleteBundleCost,
   setView,
+  openAdd,
   setActiveBundleId,
   setFilter,
   clearFilters,

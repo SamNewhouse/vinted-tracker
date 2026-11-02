@@ -8,6 +8,7 @@ import {
   setView,
   setActiveBundleId,
   deleteItem,
+  openAdd,
 } from "../../store/trackerSlice";
 import EmptyState from "../1-atoms/EmptyState";
 import Button from "../1-atoms/Button";
@@ -38,7 +39,7 @@ const ItemsPage: FC = () => {
         subtitle={`${allItems.length} item${allItems.length !== 1 ? "s" : ""}`}
         actions={
           <>
-            <Button variant="secondary" onClick={() => dispatch(setView("add-item"))}>
+            <Button variant="secondary" onClick={() => dispatch(openAdd({ tab: "item" }))}>
               + Add Item
             </Button>
             <Button variant="ghost" onClick={() => dispatch(clearFilters())}>
@@ -119,7 +120,7 @@ const ItemsPage: FC = () => {
               title="No items found"
               description="Try adjusting your filters, or add a standalone item or bundle."
               action={
-                <Button size="sm" onClick={() => dispatch(setView("add-item"))}>
+                <Button size="sm" onClick={() => dispatch(openAdd({ tab: "item" }))}>
                   + Add Item
                 </Button>
               }

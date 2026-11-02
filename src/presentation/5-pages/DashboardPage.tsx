@@ -1,7 +1,7 @@
 "use client";
 import { FC, memo } from "react";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
-import { setView } from "../../store/trackerSlice";
+import { setView, openAdd } from "../../store/trackerSlice";
 import Button from "../1-atoms/Button";
 import EmptyState from "../1-atoms/EmptyState";
 import PageHeader from "../1-atoms/PageHeader";
@@ -21,10 +21,10 @@ const DashboardPage: FC = () => {
         subtitle="Your reselling finance summary"
         actions={
           <>
-            <Button variant="secondary" onClick={() => dispatch(setView("add-item"))}>
+            <Button variant="secondary" onClick={() => dispatch(openAdd({ tab: "item" }))}>
               + Add Item
             </Button>
-            <Button onClick={() => dispatch(setView("add-bundle"))}>+ Add Bundle</Button>
+            <Button onClick={() => dispatch(openAdd({ tab: "bundle" }))}>+ Add Bundle</Button>
           </>
         }
       />
@@ -56,8 +56,8 @@ const DashboardPage: FC = () => {
           description="Log a bundle to split costs across multiple items, or add a single item you bought on its own."
           action={
             <div className="flex gap-3">
-              <Button onClick={() => dispatch(setView("add-bundle"))}>+ Add Bundle</Button>
-              <Button variant="secondary" onClick={() => dispatch(setView("add-item"))}>
+              <Button onClick={() => dispatch(openAdd({ tab: "bundle" }))}>+ Add Bundle</Button>
+              <Button variant="secondary" onClick={() => dispatch(openAdd({ tab: "item" }))}>
                 + Add Item
               </Button>
             </div>

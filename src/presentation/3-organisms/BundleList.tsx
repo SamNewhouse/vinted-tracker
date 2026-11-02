@@ -2,7 +2,7 @@
 import { FC, memo } from "react";
 import { useAppSelector, useAppDispatch } from "../../store/hooks";
 import { selectFilteredBundles } from "../../store/selectors";
-import { deleteBundle, setActiveBundleId, setView } from "../../store/trackerSlice";
+import { deleteBundle, setActiveBundleId, setView, openAdd } from "../../store/trackerSlice";
 import BundleCard from "../2-molecules/BundleCard";
 import Button from "../1-atoms/Button";
 import EmptyState from "../1-atoms/EmptyState";
@@ -28,7 +28,9 @@ const BundleList: FC = () => {
         icon="📦"
         title="No bundles yet"
         description="Add your first purchase bundle to start tracking costs and calculating minimum sale prices."
-        action={<Button onClick={() => dispatch(setView("add-bundle"))}>Add First Bundle</Button>}
+        action={
+          <Button onClick={() => dispatch(openAdd({ tab: "bundle" }))}>Add First Bundle</Button>
+        }
       />
     );
   }

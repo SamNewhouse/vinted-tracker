@@ -135,12 +135,13 @@ export interface AppConfig {
 export type ViewMode =
   | "dashboard"
   | "items"
-  | "add-item"
   | "bundles"
-  | "add-bundle"
+  | "add"
   | "bundle-detail"
   | "settings"
   | "analytics";
+
+export type AddTab = "item" | "bundle" | "expense";
 
 export type SortField = "date" | "profit" | "spend" | "revenue" | "name" | "roi";
 export type SortDirection = "asc" | "desc";

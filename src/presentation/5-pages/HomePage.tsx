@@ -5,10 +5,9 @@ import DashboardLayout from "../4-layouts/DashboardLayout";
 import DashboardPage from "./DashboardPage";
 import BundlesPage from "./BundlesPage";
 import BundleDetailPage from "./BundleDetailPage";
-import AddBundleForm from "../3-organisms/AddBundleForm";
 import ItemsPage from "./ItemsPage";
 import SettingsPage from "./SettingsPage";
-import AddItemForm from "../3-organisms/AddItemForm";
+import AddPage from "./AddPage";
 
 const HomePage: FC = () => {
   const view = useAppSelector((s) => s.tracker.view);
@@ -19,12 +18,10 @@ const HomePage: FC = () => {
         return <DashboardPage />;
       case "items":
         return <ItemsPage />;
-      case "add-item":
-        return <AddItemForm />;
       case "bundles":
         return <BundlesPage />;
-      case "add-bundle":
-        return <AddBundleForm />;
+      case "add":
+        return <AddPage />;
       case "bundle-detail":
         return <BundleDetailPage />;
       case "settings":
