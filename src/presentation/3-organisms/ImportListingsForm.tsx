@@ -5,7 +5,8 @@ import { importListings } from "../../store/trackerSlice";
 import { parseVintedHtml } from "../../utils/import/vinted";
 import { listingChange } from "../../utils/import/listings";
 import { formatCurrency } from "../../utils/finance";
-import type { BundleStatus, ImportedListing, ListingChange } from "../../types";
+import type { BundleStatus, ImportedListing, ListingChange, Source } from "../../types";
+import { SOURCES } from "../../config/constants";
 import Button from "../1-atoms/Button";
 import Select from "../1-atoms/Select";
 import Textarea from "../1-atoms/Textarea";
@@ -17,6 +18,8 @@ const CHANGE_BADGE: Record<ListingChange, BundleStatus> = {
   update: "info",
   unchanged: "neutral",
 };
+
+const NEW_BUNDLE = "__new__";
 
 interface Row {
   listing: ImportedListing;
@@ -34,6 +37,11 @@ const ImportListingsForm: FC = () => {
   const [skipped, setSkipped] = useState(0);
   const [bundleId, setBundleId] = useState("");
   const [message, setMessage] = useState("");
+  const [newName, setNewName] = useState("");
+  const [newCost, setNewCost] = useState("");
+  const [newDate, setNewDate] = useState(new Date().toISOString().split("T")[0]);
+  const [newSource, setNewSource] = useState<Source>("car_boot");
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   const handleRead = () => {
     const result = parseVintedHtml(html);
@@ -62,9 +70,32 @@ const ImportListingsForm: FC = () => {
   const selected = rows?.filter((r) => r.selected) ?? [];
 
   const handleImport = () => {
-    dispatch(
-      importListings({ bundleId: bundleId || null, listings: selected.map((r) => r.listing) }),
-    );
+    const listings = selected.map((r) => r.listing);
+
+    if (bundleId === NEW_BUNDLE) {
+      const errs: Record<string, string> = {};
+      if (!newName.trim()) errs.name = "Bundle name is required";
+      if (!newCost || isNaN(Number(newCost)) || Number(newCost) < 0)
+        errs.cost = "Enter what you paid for the whole purchase";
+      if (!newDate) errs.date = "Purchase date is required";
+      setErrors(errs);
+      if (Object.keys(errs).length > 0) return;
+
+      dispatch(
+        importListings({
+          bundleId: null,
+          newBundle: {
+            name: newName.trim(),
+            source: newSource,
+            purchaseDate: newDate,
+            purchaseCost: Number(newCost),
+          },
+          listings,
+        }),
+      );
+    } else {
+      dispatch(importListings({ bundleId: bundleId || null, listings }));
+    }
     setMessage(`✓ Imported ${selected.length} listing${selected.length !== 1 ? "s" : ""}.`);
     setRows(null);
     setHtml("");
@@ -76,11 +107,8 @@ const ImportListingsForm: FC = () => {
   };
 
   return (
-    <div className="px-5 py-5 flex flex-col gap-4">
+    <div className="flex flex-col gap-4">
       <div>
-        <p className="text-sm font-medium text-slate-900 dark:text-white mb-0.5">
-          Import listings from Vinted
-        </p>
         <p className="text-xs text-slate-500 dark:text-slate-400">
           On your Vinted wardrobe page, right-click an item → Inspect, select the element holding
           the whole grid of items, then right-click it → Copy → Copy outerHTML, and paste it here.
@@ -122,9 +150,47 @@ const ImportListingsForm: FC = () => {
             onChange={(e) => setBundleId(e.target.value)}
             options={[
               { value: "", label: "No bundle (standalone, add purchase cost later)" },
+              { value: NEW_BUNDLE, label: "New bundle (these all came from one purchase)" },
               ...bundles.map((b) => ({ value: b.id, label: b.name })),
             ]}
           />
+
+          {bundleId === NEW_BUNDLE && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 rounded-lg border border-slate-200 dark:border-slate-800 p-4">
+              <Input
+                label="Bundle Name"
+                placeholder="e.g. Car boot haul"
+                value={newName}
+                onChange={(e) => setNewName(e.target.value)}
+                error={errors.name}
+              />
+              <Select
+                label="Source"
+                value={newSource}
+                onChange={(e) => setNewSource(e.target.value as Source)}
+                options={SOURCES}
+              />
+              <Input
+                label="Total Purchase Cost"
+                type="number"
+                step="0.01"
+                min="0"
+                placeholder="0.00"
+                prefix="£"
+                value={newCost}
+                onChange={(e) => setNewCost(e.target.value)}
+                error={errors.cost}
+                hint="Split across the new items"
+              />
+              <Input
+                label="Purchase Date"
+                type="date"
+                value={newDate}
+                onChange={(e) => setNewDate(e.target.value)}
+                error={errors.date}
+              />
+            </div>
+          )}
 
           <div className="overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-800">
             <table className="w-full text-sm">

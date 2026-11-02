@@ -161,7 +161,7 @@ export type ViewMode =
   | "settings"
   | "analytics";
 
-export type AddTab = "item" | "bundle" | "expense";
+export type AddTab = "item" | "bundle" | "expense" | "import";
 
 export type SortField = "date" | "profit" | "spend" | "revenue" | "name" | "roi";
 export type SortDirection = "asc" | "desc";

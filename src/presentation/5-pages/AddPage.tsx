@@ -10,6 +10,7 @@ import Button from "../1-atoms/Button";
 import AddItemForm from "../3-organisms/AddItemForm";
 import AddBundleForm from "../3-organisms/AddBundleForm";
 import AddExtraCostForm from "../3-organisms/AddCostForm";
+import ImportListingsForm from "../3-organisms/ImportListingsForm";
 
 const TABS: { id: AddTab; label: string; hint: string }[] = [
   {
@@ -26,6 +27,11 @@ const TABS: { id: AddTab; label: string; hint: string }[] = [
     id: "expense",
     label: "Expense",
     hint: "Add a cost to a bundle, such as entry, travel or cleaning. It's split across the bundle's unsold items.",
+  },
+  {
+    id: "import",
+    label: "Import",
+    hint: "Add many listings at once from a marketplace page. Vinted for now.",
   },
 ];
 
@@ -78,6 +84,8 @@ const AddPage: FC = () => {
         )}
 
         {tab === "bundle" && <AddBundleForm />}
+
+        {tab === "import" && <ImportListingsForm />}
 
         {tab === "expense" &&
           (bundles.length === 0 ? (

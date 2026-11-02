@@ -386,19 +386,36 @@ const trackerSlice = createSlice({
 
     /**
      * Adds or updates items from marketplace listings, matched on externalId.
-     * New items go into the given bundle, or are standalone with no purchase cost yet.
+     * New items go into the given bundle, a new bundle made from `newBundle` (one purchase
+     * that all the listings came from), or are standalone with no purchase cost yet.
      * Sold listings are marked sold after the cost split, so they keep their share of
      * the bundle cost, the same as selling an item by hand.
      */
     importListings(
       state,
-      action: PayloadAction<{ bundleId: string | null; listings: ImportedListing[] }>,
+      action: PayloadAction<{
+        bundleId: string | null;
+        newBundle?: Omit<Bundle, "id" | "createdAt" | "updatedAt" | "costs">;
+        listings: ImportedListing[];
+      }>,
     ) {
-      const { bundleId, listings } = action.payload;
+      const { listings, newBundle } = action.payload;
+      const now = new Date().toISOString();
+
+      let bundleId = action.payload.bundleId;
+      if (newBundle) {
+        bundleId = uuidv4();
+        state.bundles.push({
+          ...newBundle,
+          id: bundleId,
+          costs: [],
+          createdAt: now,
+          updatedAt: now,
+        });
+      }
       const bundle = bundleId ? state.bundles.find((b) => b.id === bundleId) : undefined;
       if (bundleId && !bundle) return;
 
-      const now = new Date().toISOString();
       const margin = state.config.defaultMarginPercent;
       const touched = new Set<string>();
       const toSell: { item: Item; price: number }[] = [];
@@ -458,6 +475,11 @@ const trackerSlice = createSlice({
         item.saleCosts = state.config.defaultSaleCosts.map((c) => ({ ...c, id: uuidv4() }));
       }
       recalcTouched();
+
+      if (newBundle && bundleId) {
+        state.activeBundleId = bundleId;
+        state.view = "bundle-detail";
+      }
     },
 
     // ── Bundle Costs ─────────────────────────────────────────
