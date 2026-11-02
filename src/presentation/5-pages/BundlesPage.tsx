@@ -1,7 +1,7 @@
 "use client";
 import { FC, memo } from "react";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
-import { setView, setFilter, clearFilters } from "../../store/trackerSlice";
+import { setFilter, clearFilters, openAdd } from "../../store/trackerSlice";
 import type { SortField } from "../../types";
 import Button from "../1-atoms/Button";
 import Input from "../1-atoms/Input";
@@ -18,14 +18,16 @@ const SORT_OPTIONS = [
 const BundlesPage: FC = () => {
   const dispatch = useAppDispatch();
   const filters = useAppSelector((s) => s.tracker.filters);
-  const bundleCount = useAppSelector((s) => s.tracker.bundles.length);
+  const bundleCount = useAppSelector(
+    (s) => s.tracker.bundles.filter((b) => b.kind === "bundle").length,
+  );
 
   return (
     <div className="space-y-6">
       <PageHeader
         title="Bundles"
         subtitle={`${bundleCount} bundle${bundleCount !== 1 ? "s" : ""}`}
-        actions={<Button onClick={() => dispatch(setView("add-bundle"))}>+ Add Bundle</Button>}
+        actions={<Button onClick={() => dispatch(openAdd({ tab: "bundle" }))}>+ Add Bundle</Button>}
       />
 
       <div className="flex flex-col sm:flex-row gap-3">

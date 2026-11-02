@@ -67,26 +67,9 @@ export const selectDashboardStats = createSelector(
   (bundles, items): DashboardStats => {
     const summaries = bundles.map((b) => selectBundleSummary(b, items));
 
-    const bundleSpend = summaries.reduce((s, b) => s + b.totalInvested, 0);
-    const bundleSaleCosts = summaries.reduce((s, b) => s + b.totalSaleCosts, 0);
-    const bundleRevenue = summaries.reduce((s, b) => s + b.totalRevenue, 0);
-
-    const standaloneItems = items.filter((i) => !i.bundleId);
-    const standaloneSpend = standaloneItems.reduce(
-      (s, i) => s + i.purchaseCost + i.costs.reduce((sc, c) => sc + c.amount, 0),
-      0,
-    );
-    const standaloneSaleCosts = standaloneItems.reduce(
-      (s, i) => s + i.saleCosts.reduce((sc, c) => sc + c.amount, 0),
-      0,
-    );
-    const standaloneRevenue = standaloneItems
-      .filter((i) => i.status === "sold")
-      .reduce((s, i) => s + (i.salePrice ?? 0), 0);
-
-    const totalSpend = bundleSpend + standaloneSpend;
-    const totalSaleCosts = bundleSaleCosts + standaloneSaleCosts;
-    const totalRevenue = bundleRevenue + standaloneRevenue;
+    const totalSpend = summaries.reduce((s, b) => s + b.totalInvested, 0);
+    const totalSaleCosts = summaries.reduce((s, b) => s + b.totalSaleCosts, 0);
+    const totalRevenue = summaries.reduce((s, b) => s + b.totalRevenue, 0);
     const totalProfit = totalRevenue - totalSpend - totalSaleCosts;
     const overallROI = totalSpend > 0 ? (totalProfit / totalSpend) * 100 : 0;
 
@@ -112,7 +95,7 @@ export const selectDashboardStats = createSelector(
       totalRevenue,
       totalProfit,
       overallROI,
-      totalBundles: bundles.length,
+      totalBundles: bundles.filter((b) => b.kind === "bundle").length,
       totalItems: items.length,
       soldItems: soldItems.length,
       listedItems: items.filter((i) => i.status === "listed").length,
@@ -129,7 +112,7 @@ export const selectDashboardStats = createSelector(
 export const selectFilteredBundles = createSelector(
   [selectBundles, selectAllItems, selectFilters],
   (bundles, items, filters) => {
-    let result = [...bundles];
+    let result = bundles.filter((b) => b.kind === "bundle");
 
     if (filters?.search) {
       const q = filters?.search.toLowerCase();
@@ -173,8 +156,9 @@ export const selectFilteredItems = createSelector(
     }
 
     if (filters?.bundleId && filters.bundleId !== "all") {
-      if (filters.bundleId === "standalone") {
-        result = result.filter((i) => !i.bundleId);
+      if (filters.bundleId === "single") {
+        const singles = new Set(bundles.filter((b) => b.kind === "single").map((b) => b.id));
+        result = result.filter((i) => singles.has(i.bundleId));
       } else {
         result = result.filter((i) => i.bundleId === filters.bundleId);
       }
@@ -185,11 +169,8 @@ export const selectFilteredItems = createSelector(
       result = result.filter((i) => {
         if (i.name.toLowerCase().includes(q)) return true;
         if (i.source.toLowerCase().includes(q)) return true;
-        if (i.bundleId) {
-          const bundle = bundles.find((b) => b.id === i.bundleId);
-          if (bundle?.name.toLowerCase().includes(q)) return true;
-        }
-        return false;
+        const bundle = bundles.find((b) => b.id === i.bundleId);
+        return bundle?.name.toLowerCase().includes(q) ?? false;
       });
     }
 

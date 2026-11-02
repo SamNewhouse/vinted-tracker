@@ -1,5 +1,6 @@
 import type { Bundle, Item, AppConfig } from "../types";
 import type { TrackerState } from "../store/trackerSlice";
+import { toPurchases } from "./purchases";
 
 // ── Export types ─────────────────────────────────────────────
 
@@ -51,11 +52,13 @@ export function parseImportFile(file: File): Promise<ImportResult> {
           return;
         }
 
+        // Older backups have items with no purchase; convert them to single-item purchases.
+        const { bundles, items } = toPurchases(parsed.bundles, parsed.items);
         resolve({
           ok: true,
           data: {
-            bundles: parsed.bundles,
-            items: parsed.items,
+            bundles,
+            items,
             config: parsed.config ?? null,
             exportedAt: parsed.exportedAt ?? "",
           },

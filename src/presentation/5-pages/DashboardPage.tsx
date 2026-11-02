@@ -1,7 +1,7 @@
 "use client";
 import { FC, memo } from "react";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
-import { setView } from "../../store/trackerSlice";
+import { setView, openAdd } from "../../store/trackerSlice";
 import Button from "../1-atoms/Button";
 import EmptyState from "../1-atoms/EmptyState";
 import PageHeader from "../1-atoms/PageHeader";
@@ -10,7 +10,9 @@ import DashboardStatsOrganism from "../3-organisms/DashboardStats";
 
 const DashboardPage: FC = () => {
   const dispatch = useAppDispatch();
-  const bundleCount = useAppSelector((s) => s.tracker.bundles.length);
+  const bundleCount = useAppSelector(
+    (s) => s.tracker.bundles.filter((b) => b.kind === "bundle").length,
+  );
   const itemCount = useAppSelector((s) => s.tracker.items.length);
   const hasData = bundleCount > 0 || itemCount > 0;
 
@@ -21,10 +23,10 @@ const DashboardPage: FC = () => {
         subtitle="Your reselling finance summary"
         actions={
           <>
-            <Button variant="secondary" onClick={() => dispatch(setView("add-item"))}>
+            <Button variant="secondary" onClick={() => dispatch(openAdd({ tab: "single" }))}>
               + Add Item
             </Button>
-            <Button onClick={() => dispatch(setView("add-bundle"))}>+ Add Bundle</Button>
+            <Button onClick={() => dispatch(openAdd({ tab: "bundle" }))}>+ Add Bundle</Button>
           </>
         }
       />
@@ -56,8 +58,8 @@ const DashboardPage: FC = () => {
           description="Log a bundle to split costs across multiple items, or add a single item you bought on its own."
           action={
             <div className="flex gap-3">
-              <Button onClick={() => dispatch(setView("add-bundle"))}>+ Add Bundle</Button>
-              <Button variant="secondary" onClick={() => dispatch(setView("add-item"))}>
+              <Button onClick={() => dispatch(openAdd({ tab: "bundle" }))}>+ Add Bundle</Button>
+              <Button variant="secondary" onClick={() => dispatch(openAdd({ tab: "single" }))}>
                 + Add Item
               </Button>
             </div>

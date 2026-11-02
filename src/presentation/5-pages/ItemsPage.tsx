@@ -8,6 +8,7 @@ import {
   setView,
   setActiveBundleId,
   deleteItem,
+  openAdd,
 } from "../../store/trackerSlice";
 import EmptyState from "../1-atoms/EmptyState";
 import Button from "../1-atoms/Button";
@@ -25,8 +26,9 @@ const ItemsPage: FC = () => {
   const filters = useAppSelector((s) => s.tracker.filters);
   const bundles = useAppSelector((s) => s.tracker.bundles);
   const allItems = useAppSelector((s) => s.tracker.items);
-
-  const hasStandalone = allItems.some((i) => !i.bundleId);
+  const realBundles = bundles.filter((b) => b.kind === "bundle");
+  const hasSingles = bundles.some((b) => b.kind === "single");
+  const bundleName = (id: string) => realBundles.find((b) => b.id === id)?.name;
 
   const [soldItem, setSoldItem] = useState<Item | null>(null);
   const [editItem, setEditItem] = useState<Item | null>(null);
@@ -38,7 +40,7 @@ const ItemsPage: FC = () => {
         subtitle={`${allItems.length} item${allItems.length !== 1 ? "s" : ""}`}
         actions={
           <>
-            <Button variant="secondary" onClick={() => dispatch(setView("add-item"))}>
+            <Button variant="secondary" onClick={() => dispatch(openAdd({ tab: "single" }))}>
               + Add Item
             </Button>
             <Button variant="ghost" onClick={() => dispatch(clearFilters())}>
@@ -73,8 +75,8 @@ const ItemsPage: FC = () => {
           onChange={(e) => dispatch(setFilter({ bundleId: e.target.value }))}
           options={[
             { value: "all", label: "All items" },
-            ...(hasStandalone ? [{ value: "standalone", label: "Standalone" }] : []),
-            ...bundles.map((b) => ({ value: b.id, label: b.name })),
+            ...(hasSingles ? [{ value: "single", label: "Single items" }] : []),
+            ...realBundles.map((b) => ({ value: b.id, label: b.name })),
           ]}
         />
         <Select
@@ -117,9 +119,9 @@ const ItemsPage: FC = () => {
             <EmptyState
               icon="📦"
               title="No items found"
-              description="Try adjusting your filters, or add a standalone item or bundle."
+              description="Try adjusting your filters, or add a single item or a bundle."
               action={
-                <Button size="sm" onClick={() => dispatch(setView("add-item"))}>
+                <Button size="sm" onClick={() => dispatch(openAdd({ tab: "single" }))}>
                   + Add Item
                 </Button>
               }
@@ -131,6 +133,7 @@ const ItemsPage: FC = () => {
                 item={item}
                 isOnly={items.length === 1}
                 showBundle
+                bundleName={bundleName(item.bundleId)}
                 onMarkSold={setSoldItem}
                 onEdit={setEditItem}
                 onDelete={(id) => dispatch(deleteItem(id))}
