@@ -10,7 +10,9 @@ import {
   FilterState,
   AppConfig,
   Source,
+  ImportedListing,
 } from "../types";
+import { listingChange } from "../utils/import/listings";
 import { REHYDRATE } from "redux-persist";
 
 // ── State ────────────────────────────────────────────────────
@@ -422,6 +424,82 @@ const trackerSlice = createSlice({
       }
     },
 
+    /**
+     * Adds or updates items from marketplace listings, matched on externalId.
+     * New items go into the given bundle, or are standalone with no purchase cost yet.
+     * Sold listings are marked sold after the cost split, so they keep their share of
+     * the bundle cost, the same as selling an item by hand.
+     */
+    importListings(
+      state,
+      action: PayloadAction<{ bundleId: string | null; listings: ImportedListing[] }>,
+    ) {
+      const { bundleId, listings } = action.payload;
+      const bundle = bundleId ? state.bundles.find((b) => b.id === bundleId) : undefined;
+      if (bundleId && !bundle) return;
+
+      const now = new Date().toISOString();
+      const margin = state.config.defaultMarginPercent;
+      const touched = new Set<string>();
+      const toSell: { item: Item; price: number }[] = [];
+
+      for (const listing of listings) {
+        const existing = state.items.find((i) => i.externalId === listing.externalId);
+        const change = listingChange(listing, existing);
+        if (change === "unchanged") continue;
+
+        let item = existing;
+        if (!item) {
+          item = {
+            id: uuidv4(),
+            bundleId: bundle?.id,
+            source: bundle?.source ?? "other",
+            purchaseDate: bundle?.purchaseDate ?? now.slice(0, 10),
+            purchaseCost: 0,
+            name: listing.name,
+            description: [listing.brand, listing.size, listing.condition]
+              .filter(Boolean)
+              .join(" · "),
+            allocatedPurchaseCost: 0,
+            allocatedCostShare: 0,
+            targetMarginPercent: margin,
+            breakEvenPrice: 0,
+            minSalePrice: 0,
+            costs: [],
+            saleCosts: [],
+            status: "listed",
+            externalId: listing.externalId,
+            createdAt: now,
+            updatedAt: now,
+          };
+          state.items.push(item);
+          if (!item.bundleId) recalculateStandalone(item, margin);
+        }
+
+        item.status = "listed";
+        item.listedPrice = listing.price;
+        item.listedAt ??= now;
+        item.updatedAt = now;
+        if (item.bundleId) touched.add(item.bundleId);
+        if (listing.status === "sold") toSell.push({ item, price: listing.price });
+      }
+
+      const recalcTouched = () => {
+        for (const b of state.bundles) {
+          if (touched.has(b.id)) recalculateAllocations(b, state.items, margin);
+        }
+      };
+
+      recalcTouched();
+      for (const { item, price } of toSell) {
+        item.status = "sold";
+        item.salePrice = price;
+        item.soldAt = now;
+        item.saleCosts = state.config.defaultSaleCosts.map((c) => ({ ...c, id: uuidv4() }));
+      }
+      recalcTouched();
+    },
+
     // ── Bundle Costs ─────────────────────────────────────────
 
     addBundleCost(state, action: PayloadAction<{ bundleId: string; cost: Omit<Cost, "id"> }>) {
@@ -547,6 +625,7 @@ export const {
   addItem,
   addBundleItems,
   addStandaloneItem,
+  importListings,
   updateItem,
   deleteItem,
   markItemSold,

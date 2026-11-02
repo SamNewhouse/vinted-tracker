@@ -12,6 +12,7 @@ import type { ImportMode, ImportResult } from "../../utils/data";
 import type { Cost, CostCategory } from "../../types";
 import { COST_CATEGORIES } from "../../config/constants";
 import { v4 as uuidv4 } from "uuid";
+import ImportListingsForm from "../3-organisms/ImportListingsForm";
 
 const SettingsPage: FC = () => {
   const dispatch = useAppDispatch();
@@ -243,6 +244,16 @@ const SettingsPage: FC = () => {
           </button>
           {saved && <span className="text-xs text-emerald-600 dark:text-emerald-400">✓ Saved</span>}
         </div>
+      </div>
+
+      {/* Import listings */}
+      <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 divide-y divide-slate-100 dark:divide-slate-800 mb-6">
+        <div className="px-5 py-4">
+          <h2 className="font-heading font-semibold text-sm text-slate-900 dark:text-white">
+            Import listings
+          </h2>
+        </div>
+        <ImportListingsForm />
       </div>
 
       {/* Export / Import */}

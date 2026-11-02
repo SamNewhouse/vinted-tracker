@@ -62,9 +62,29 @@ export interface Item {
   listedPrice?: number;
   soldAt?: string;
   salePrice?: number;
+  externalId?: string; // listing id on the marketplace it was imported from
   createdAt: string;
   updatedAt: string;
 }
+
+// ── Imported listings ─────────────────────────────────────────
+
+/** A listing read from a marketplace page. Every import source returns this shape. */
+export interface ImportedListing {
+  externalId: string;
+  name: string;
+  brand?: string;
+  condition?: string;
+  size?: string;
+  price: number;
+  status: "listed" | "sold";
+  pending: boolean; // sold but the sale is still processing
+  views?: number;
+  favourites?: number;
+  url: string;
+}
+
+export type ListingChange = "new" | "update" | "unchanged";
 
 // ── Bundle ────────────────────────────────────────────────────
 
