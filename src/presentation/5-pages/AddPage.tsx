@@ -14,19 +14,19 @@ import ImportListingsForm from "../3-organisms/ImportListingsForm";
 
 const TABS: { id: AddTab; label: string; hint: string }[] = [
   {
-    id: "item",
-    label: "Item",
-    hint: "Add a single item bought on its own, or add one or more items to a bundle.",
+    id: "single",
+    label: "Single item",
+    hint: "One thing bought on its own, for its own price.",
   },
   {
     id: "bundle",
     label: "Bundle",
-    hint: "Log a purchase of several items. Sale costs are recorded per item when you mark it as sold.",
+    hint: "Several things bought together for one price. The price is split across them, and each becomes its own item.",
   },
   {
     id: "expense",
     label: "Expense",
-    hint: "Add a cost to a bundle, such as entry, travel or cleaning. It's split across the bundle's unsold items.",
+    hint: "An extra cost on a purchase, such as entry, travel, postage or cleaning. On a bundle it's split across the unsold items.",
   },
   {
     id: "import",
@@ -35,24 +35,31 @@ const TABS: { id: AddTab; label: string; hint: string }[] = [
   },
 ];
 
+const NEW_BUNDLE = "";
+
 const isAddTab = (id: string): id is AddTab => TABS.some((t) => t.id === id);
 
 const AddPage: FC = () => {
   const dispatch = useAppDispatch();
   const target = useAppSelector((s) => s.tracker.addTarget);
-  const bundles = useAppSelector((s) => s.tracker.bundles);
+  const purchases = useAppSelector((s) => s.tracker.bundles);
 
-  const tab = target.tab;
-  const [bundleId, setBundleId] = useState(target.bundleId ?? "");
-  const current = TABS.find((t) => t.id === tab) ?? TABS[0];
+  const current = TABS.find((t) => t.id === target.tab) ?? TABS[0];
+  const [purchaseId, setPurchaseId] = useState(target.bundleId ?? "");
 
-  const bundleOptions = bundles.map((b) => ({ value: b.id, label: b.name }));
-  // The expense tab needs a bundle; fall back to the first one if none is chosen.
-  const expenseBundleId = bundleId || bundles[0]?.id || "";
+  const bundles = purchases.filter((b) => b.kind === "bundle");
+  const chosenBundle = bundles.find((b) => b.id === purchaseId)?.id ?? NEW_BUNDLE;
+  // An expense can go on any purchase; fall back to the first one if none is chosen.
+  const expensePurchase = purchases.find((p) => p.id === purchaseId) ?? purchases[0];
 
-  const backToBundle = (id: string) => {
-    dispatch(setActiveBundleId(id));
-    dispatch(setView("bundle-detail"));
+  const goToPurchase = (id: string) => {
+    const purchase = purchases.find((p) => p.id === id);
+    if (purchase?.kind === "bundle") {
+      dispatch(setActiveBundleId(id));
+      dispatch(setView("bundle-detail"));
+    } else {
+      dispatch(setView("items"));
+    }
   };
 
   return (
@@ -62,37 +69,49 @@ const AddPage: FC = () => {
         <Tabs
           label="What to add"
           tabs={TABS}
-          active={tab}
+          active={current.id}
           onChange={(id) => {
-            if (isAddTab(id)) dispatch(openAdd({ tab: id, bundleId: bundleId || undefined }));
+            if (isAddTab(id)) dispatch(openAdd({ tab: id, bundleId: purchaseId || undefined }));
           }}
         />
         <p className="text-sm text-slate-500 dark:text-slate-400">{current.hint}</p>
       </div>
 
-      <div id={`panel-${tab}`} role="tabpanel" aria-labelledby={`tab-${tab}`} className="space-y-4">
-        {tab === "item" && (
+      <div
+        id={`panel-${current.id}`}
+        role="tabpanel"
+        aria-labelledby={`tab-${current.id}`}
+        className="space-y-4"
+      >
+        {current.id === "single" && <AddItemForm bundleId={null} />}
+
+        {current.id === "bundle" && (
           <>
-            <Select
-              label="Bundle"
-              value={bundleId}
-              onChange={(e) => setBundleId(e.target.value)}
-              options={[{ value: "", label: "No bundle (standalone item)" }, ...bundleOptions]}
-            />
-            <AddItemForm key={bundleId || "standalone"} bundleId={bundleId || null} />
+            {bundles.length > 0 && (
+              <Select
+                label="Bundle"
+                value={chosenBundle}
+                onChange={(e) => setPurchaseId(e.target.value)}
+                options={[
+                  { value: NEW_BUNDLE, label: "New bundle" },
+                  ...bundles.map((b) => ({ value: b.id, label: `Add items to: ${b.name}` })),
+                ]}
+              />
+            )}
+            {chosenBundle === NEW_BUNDLE ? (
+              <AddBundleForm />
+            ) : (
+              <AddItemForm key={chosenBundle} bundleId={chosenBundle} />
+            )}
           </>
         )}
 
-        {tab === "bundle" && <AddBundleForm />}
-
-        {tab === "import" && <ImportListingsForm />}
-
-        {tab === "expense" &&
-          (bundles.length === 0 ? (
+        {current.id === "expense" &&
+          (!expensePurchase ? (
             <EmptyState
               icon="◻"
-              title="No bundles yet"
-              description="Expenses belong to a bundle. Add a bundle first."
+              title="Nothing bought yet"
+              description="Expenses belong to a purchase. Add a single item or a bundle first."
               action={
                 <Button onClick={() => dispatch(openAdd({ tab: "bundle" }))}>+ Add Bundle</Button>
               }
@@ -100,18 +119,23 @@ const AddPage: FC = () => {
           ) : (
             <>
               <Select
-                label="Bundle"
-                value={expenseBundleId}
-                onChange={(e) => setBundleId(e.target.value)}
-                options={bundleOptions}
+                label="Purchase"
+                value={expensePurchase.id}
+                onChange={(e) => setPurchaseId(e.target.value)}
+                options={purchases.map((p) => ({
+                  value: p.id,
+                  label: p.kind === "single" ? `${p.name} (single item)` : p.name,
+                }))}
               />
               <AddExtraCostForm
-                key={expenseBundleId}
-                bundleId={expenseBundleId}
-                onClose={() => backToBundle(expenseBundleId)}
+                key={expensePurchase.id}
+                bundleId={expensePurchase.id}
+                onClose={() => goToPurchase(expensePurchase.id)}
               />
             </>
           ))}
+
+        {current.id === "import" && <ImportListingsForm />}
       </div>
     </div>
   );

@@ -10,7 +10,9 @@ import DashboardStatsOrganism from "../3-organisms/DashboardStats";
 
 const DashboardPage: FC = () => {
   const dispatch = useAppDispatch();
-  const bundleCount = useAppSelector((s) => s.tracker.bundles.length);
+  const bundleCount = useAppSelector(
+    (s) => s.tracker.bundles.filter((b) => b.kind === "bundle").length,
+  );
   const itemCount = useAppSelector((s) => s.tracker.items.length);
   const hasData = bundleCount > 0 || itemCount > 0;
 
@@ -21,7 +23,7 @@ const DashboardPage: FC = () => {
         subtitle="Your reselling finance summary"
         actions={
           <>
-            <Button variant="secondary" onClick={() => dispatch(openAdd({ tab: "item" }))}>
+            <Button variant="secondary" onClick={() => dispatch(openAdd({ tab: "single" }))}>
               + Add Item
             </Button>
             <Button onClick={() => dispatch(openAdd({ tab: "bundle" }))}>+ Add Bundle</Button>
@@ -57,7 +59,7 @@ const DashboardPage: FC = () => {
           action={
             <div className="flex gap-3">
               <Button onClick={() => dispatch(openAdd({ tab: "bundle" }))}>+ Add Bundle</Button>
-              <Button variant="secondary" onClick={() => dispatch(openAdd({ tab: "item" }))}>
+              <Button variant="secondary" onClick={() => dispatch(openAdd({ tab: "single" }))}>
                 + Add Item
               </Button>
             </div>

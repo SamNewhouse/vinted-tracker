@@ -29,7 +29,8 @@ interface Row {
 
 const ImportListingsForm: FC = () => {
   const dispatch = useAppDispatch();
-  const bundles = useAppSelector((s) => s.tracker.bundles);
+  const purchases = useAppSelector((s) => s.tracker.bundles);
+  const bundles = purchases.filter((b) => b.kind === "bundle");
   const items = useAppSelector((s) => s.tracker.items);
 
   const [html, setHtml] = useState("");
@@ -149,7 +150,7 @@ const ImportListingsForm: FC = () => {
             value={bundleId}
             onChange={(e) => setBundleId(e.target.value)}
             options={[
-              { value: "", label: "No bundle (standalone, add purchase cost later)" },
+              { value: "", label: "Separate single items (add what each cost later)" },
               { value: NEW_BUNDLE, label: "New bundle (these all came from one purchase)" },
               ...bundles.map((b) => ({ value: b.id, label: b.name })),
             ]}

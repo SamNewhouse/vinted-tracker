@@ -45,6 +45,7 @@ const AddBundleForm: FC = () => {
     dispatch(
       addBundle({
         bundle: {
+          kind: "bundle",
           name: name.trim(),
           source,
           purchaseCost: Number(purchaseCost),

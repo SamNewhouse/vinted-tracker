@@ -11,6 +11,8 @@ import ItemRowPricingBreakdown from "./ItemRowPricingBreakdown";
 interface Props {
   item: Item;
   showBundle?: boolean;
+  /** Name of the bundle the item came from; leave out for a single-item purchase. */
+  bundleName?: string;
   onMarkSold: (item: Item) => void;
   onEdit: (item: Item) => void;
   onDelete: (itemId: string) => void;
@@ -29,6 +31,7 @@ const statusVariant = {
 const ItemRow: FC<Props> = ({
   item,
   showBundle = false,
+  bundleName,
   onMarkSold,
   onEdit,
   onDelete,
@@ -96,6 +99,14 @@ const ItemRow: FC<Props> = ({
               {item.name}
             </span>
             <Badge label={item.status} status={statusVariant[item.status]} />
+            {showBundle &&
+              (bundleName ? (
+                <span className="text-xs text-slate-400 dark:text-slate-500 truncate">
+                  {bundleName}
+                </span>
+              ) : (
+                <Badge label="Single" />
+              ))}
           </div>
 
           {/* Mobile: cost info */}
@@ -167,9 +178,9 @@ const ItemRow: FC<Props> = ({
       {/* Expanded panel */}
       {expanded && (
         <div className="mb-3 space-y-2">
-          {showBundle && item.bundleId && (
+          {showBundle && bundleName && (
             <button
-              onClick={() => onBundleClick?.(item.bundleId!)}
+              onClick={() => onBundleClick?.(item.bundleId)}
               className="text-xs text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 transition-colors ml-1"
             >
               {item.source} → view bundle

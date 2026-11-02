@@ -20,6 +20,8 @@ export type Source =
   | "gumtree"
   | "other";
 
+export type PurchaseKind = "single" | "bundle";
+
 export type CostCategory =
   | "postage"
   | "admission"
@@ -42,10 +44,10 @@ export interface Cost {
 
 export interface Item {
   id: string;
-  bundleId?: string;
+  bundleId: string; // the purchase this item came from (a bundle, or a single-item purchase)
   source: Source;
   purchaseDate: string;
-  purchaseCost: number; // direct cost for standalone; allocated share for bundle items
+  purchaseCost: number; // this item's share of its purchase's cost
   name: string;
   description?: string;
   notes?: string;
@@ -55,7 +57,6 @@ export interface Item {
   minSalePrice: number;
   targetMarginPercent: number;
   marginOverridden?: boolean;
-  costs: Cost[]; // acquisition costs (standalone only); empty for bundle items
   saleCosts: Cost[]; // costs incurred when selling
   status: ItemStatus;
   listedAt?: string;
@@ -88,8 +89,13 @@ export type ListingChange = "new" | "update" | "unchanged";
 
 // ── Bundle ────────────────────────────────────────────────────
 
+/**
+ * A purchase. `bundle`: several things bought for one price, the cost split across them.
+ * `single`: one thing bought on its own (a purchase with one item).
+ */
 export interface Bundle {
   id: string;
+  kind: PurchaseKind;
   name: string;
   source: Source;
   purchaseDate: string;
@@ -161,7 +167,7 @@ export type ViewMode =
   | "settings"
   | "analytics";
 
-export type AddTab = "item" | "bundle" | "expense" | "import";
+export type AddTab = "single" | "bundle" | "expense" | "import";
 
 export type SortField = "date" | "profit" | "spend" | "revenue" | "name" | "roi";
 export type SortDirection = "asc" | "desc";

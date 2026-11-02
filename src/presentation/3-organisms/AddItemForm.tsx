@@ -1,12 +1,8 @@
 "use client";
 import { FC, memo, useState } from "react";
 import { useAppDispatch } from "../../store/hooks";
-import {
-  addBundleItems,
-  addStandaloneItem,
-  setActiveBundleId,
-  setView,
-} from "../../store/trackerSlice";
+import { addBundle, addBundleItems, setActiveBundleId, setView } from "../../store/trackerSlice";
+import { v4 as uuidv4 } from "uuid";
 import type { Cost, DraftItem, Source } from "../../types";
 import Input from "../1-atoms/Input";
 import Button from "../1-atoms/Button";
@@ -16,7 +12,7 @@ import DraftItemList from "../2-molecules/DraftItemList";
 import { SOURCES } from "../../config/constants";
 
 interface Props {
-  /** Add one or more items to this bundle, or a single standalone item when null. */
+  /** Add one or more items to this bundle, or one single item (its own purchase) when null. */
   bundleId: string | null;
 }
 
@@ -65,15 +61,25 @@ const AddItemForm: FC<Props> = ({ bundleId }) => {
       return;
     }
 
+    // A single item is a purchase of one.
     dispatch(
-      addStandaloneItem({
-        name: name.trim(),
-        source,
-        purchaseDate,
-        purchaseCost: Number(purchaseCost),
-        description: description.trim() || undefined,
-        notes: notes.trim() || undefined,
-        costs,
+      addBundle({
+        bundle: {
+          kind: "single",
+          name: name.trim(),
+          source,
+          purchaseDate,
+          purchaseCost: Number(purchaseCost),
+          costs,
+        },
+        draftItems: [
+          {
+            id: uuidv4(),
+            name: name.trim(),
+            description: description.trim() || undefined,
+            notes: notes.trim() || undefined,
+          },
+        ],
       }),
     );
     goBack();

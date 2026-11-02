@@ -106,7 +106,7 @@ const BundleDetailPage: FC = () => {
             <Button
               size="sm"
               variant="secondary"
-              onClick={() => dispatch(openAdd({ tab: "item", bundleId: bundle.id }))}
+              onClick={() => dispatch(openAdd({ tab: "bundle", bundleId: bundle.id }))}
             >
               + Add Item
             </Button>

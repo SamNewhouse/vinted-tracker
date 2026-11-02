@@ -9,11 +9,11 @@ import {
   ViewMode,
   FilterState,
   AppConfig,
-  Source,
   AddTab,
   ImportedListing,
 } from "../types";
 import { listingChange } from "../utils/import/listings";
+import { toPurchases } from "../utils/purchases";
 import { REHYDRATE } from "redux-persist";
 
 // ── State ────────────────────────────────────────────────────
@@ -42,7 +42,7 @@ export const initialState: TrackerState = {
   activeBundleId: null,
   view: "dashboard",
   filters: defaultFilters,
-  addTarget: { tab: "item", bundleId: null },
+  addTarget: { tab: "single", bundleId: null },
   config: {
     defaultMarginPercent: 15,
     defaultSaleCosts: [],
@@ -101,19 +101,6 @@ function recalculateAllocations(
   }
 }
 
-/**
- * Recalculates prices for a standalone item in-place.
- */
-function recalculateStandalone(item: Item, defaultMarginPercent: number): void {
-  const totalCosts = item.costs.reduce((s, c) => s + c.amount, 0);
-  item.breakEvenPrice = item.purchaseCost + totalCosts;
-  item.allocatedPurchaseCost = item.purchaseCost;
-  item.allocatedCostShare = totalCosts;
-  item.minSalePrice =
-    item.breakEvenPrice * (1 + (item.targetMarginPercent ?? defaultMarginPercent) / 100);
-  item.updatedAt = new Date().toISOString();
-}
-
 // ── Slice ────────────────────────────────────────────────────
 
 const trackerSlice = createSlice({
@@ -160,7 +147,6 @@ const trackerSlice = createSlice({
           targetMarginPercent: state.config.defaultMarginPercent,
           breakEvenPrice: perItemPurchaseCost,
           minSalePrice: 0,
-          costs: [],
           saleCosts: [],
           status: "unlisted",
           createdAt: now,
@@ -172,7 +158,7 @@ const trackerSlice = createSlice({
       recalculateAllocations(newBundle, state.items, state.config.defaultMarginPercent);
 
       state.activeBundleId = bundleId;
-      state.view = "bundle-detail";
+      state.view = bundle.kind === "single" ? "items" : "bundle-detail";
     },
 
     updateBundle(
@@ -242,7 +228,6 @@ const trackerSlice = createSlice({
           targetMarginPercent: state.config.defaultMarginPercent,
           breakEvenPrice: 0,
           minSalePrice: 0,
-          costs: [],
           saleCosts: [],
           status: "unlisted",
           createdAt: now,
@@ -252,55 +237,6 @@ const trackerSlice = createSlice({
 
       bundle.updatedAt = now;
       recalculateAllocations(bundle, state.items, state.config.defaultMarginPercent);
-    },
-
-    addStandaloneItem(
-      state,
-      action: PayloadAction<{
-        name: string;
-        source: Source;
-        purchaseDate: string;
-        purchaseCost: number;
-        description?: string;
-        notes?: string;
-        costs?: Omit<Cost, "id">[];
-      }>,
-    ) {
-      const now = new Date().toISOString();
-      const {
-        name,
-        source,
-        purchaseDate,
-        purchaseCost,
-        description,
-        notes,
-        costs = [],
-      } = action.payload;
-      const resolvedCosts = costs.map((c) => ({ ...c, id: uuidv4() }));
-      const totalCosts = resolvedCosts.reduce((s, c) => s + c.amount, 0);
-      const breakEven = purchaseCost + totalCosts;
-      const minSale = breakEven * (1 + state.config.defaultMarginPercent / 100);
-
-      state.items.push({
-        id: uuidv4(),
-        bundleId: undefined,
-        source,
-        purchaseDate,
-        purchaseCost,
-        name,
-        description,
-        notes,
-        allocatedPurchaseCost: purchaseCost,
-        allocatedCostShare: totalCosts,
-        breakEvenPrice: breakEven,
-        minSalePrice: minSale,
-        targetMarginPercent: state.config.defaultMarginPercent,
-        costs: resolvedCosts,
-        saleCosts: [],
-        status: "unlisted",
-        createdAt: now,
-        updatedAt: now,
-      });
     },
 
     updateItem(
@@ -323,20 +259,19 @@ const trackerSlice = createSlice({
         item.marginOverridden = true;
       }
 
-      if (item.bundleId) {
-        const bundle = state.bundles.find((b) => b.id === item.bundleId);
-        if (bundle) recalculateAllocations(bundle, state.items, state.config.defaultMarginPercent);
-      } else {
-        recalculateStandalone(item, state.config.defaultMarginPercent);
-      }
+      const bundle = state.bundles.find((b) => b.id === item.bundleId);
+      if (bundle) recalculateAllocations(bundle, state.items, state.config.defaultMarginPercent);
     },
 
     deleteItem(state, action: PayloadAction<string>) {
       const item = state.items.find((i) => i.id === action.payload);
       if (!item) return;
-      const bundle = item.bundleId ? state.bundles.find((b) => b.id === item.bundleId) : undefined;
+      const bundle = state.bundles.find((b) => b.id === item.bundleId);
       state.items = state.items.filter((i) => i.id !== action.payload);
-      if (bundle) {
+      if (bundle?.kind === "single") {
+        // A single-item purchase goes with its item.
+        state.bundles = state.bundles.filter((b) => b.id !== bundle.id);
+      } else if (bundle) {
         bundle.updatedAt = new Date().toISOString();
         recalculateAllocations(bundle, state.items, state.config.defaultMarginPercent);
       }
@@ -360,10 +295,8 @@ const trackerSlice = createSlice({
       item.saleCosts = action.payload.saleCosts;
       item.updatedAt = now;
 
-      if (item.bundleId) {
-        const bundle = state.bundles.find((b) => b.id === item.bundleId);
-        if (bundle) recalculateAllocations(bundle, state.items, state.config.defaultMarginPercent);
-      }
+      const bundle = state.bundles.find((b) => b.id === item.bundleId);
+      if (bundle) recalculateAllocations(bundle, state.items, state.config.defaultMarginPercent);
     },
 
     markItemStatus(state, action: PayloadAction<{ itemId: string; status: ItemStatus }>) {
@@ -378,16 +311,15 @@ const trackerSlice = createSlice({
       }
       item.updatedAt = new Date().toISOString();
 
-      if (item.bundleId) {
-        const bundle = state.bundles.find((b) => b.id === item.bundleId);
-        if (bundle) recalculateAllocations(bundle, state.items, state.config.defaultMarginPercent);
-      }
+      const bundle = state.bundles.find((b) => b.id === item.bundleId);
+      if (bundle) recalculateAllocations(bundle, state.items, state.config.defaultMarginPercent);
     },
 
     /**
      * Adds or updates items from marketplace listings, matched on externalId.
      * New items go into the given bundle, a new bundle made from `newBundle` (one purchase
-     * that all the listings came from), or are standalone with no purchase cost yet.
+     * that all the listings came from), or each become a single-item purchase costing £0
+     * until the purchase cost is filled in.
      * Sold listings are marked sold after the cost split, so they keep their share of
      * the bundle cost, the same as selling an item by hand.
      */
@@ -395,7 +327,7 @@ const trackerSlice = createSlice({
       state,
       action: PayloadAction<{
         bundleId: string | null;
-        newBundle?: Omit<Bundle, "id" | "createdAt" | "updatedAt" | "costs">;
+        newBundle?: Omit<Bundle, "id" | "kind" | "createdAt" | "updatedAt" | "costs">;
         listings: ImportedListing[];
       }>,
     ) {
@@ -408,6 +340,7 @@ const trackerSlice = createSlice({
         state.bundles.push({
           ...newBundle,
           id: bundleId,
+          kind: "bundle",
           costs: [],
           createdAt: now,
           updatedAt: now,
@@ -427,11 +360,26 @@ const trackerSlice = createSlice({
 
         let item = existing;
         if (!item) {
+          let purchase = bundle;
+          if (!purchase) {
+            purchase = {
+              id: uuidv4(),
+              kind: "single",
+              name: listing.name,
+              source: "other",
+              purchaseDate: now.slice(0, 10),
+              purchaseCost: 0,
+              costs: [],
+              createdAt: now,
+              updatedAt: now,
+            };
+            state.bundles.push(purchase);
+          }
           item = {
             id: uuidv4(),
-            bundleId: bundle?.id,
-            source: bundle?.source ?? "other",
-            purchaseDate: bundle?.purchaseDate ?? now.slice(0, 10),
+            bundleId: purchase.id,
+            source: purchase.source,
+            purchaseDate: purchase.purchaseDate,
             purchaseCost: 0,
             name: listing.name,
             description: [listing.brand, listing.size, listing.condition]
@@ -442,7 +390,6 @@ const trackerSlice = createSlice({
             targetMarginPercent: margin,
             breakEvenPrice: 0,
             minSalePrice: 0,
-            costs: [],
             saleCosts: [],
             status: "listed",
             externalId: listing.externalId,
@@ -450,14 +397,13 @@ const trackerSlice = createSlice({
             updatedAt: now,
           };
           state.items.push(item);
-          if (!item.bundleId) recalculateStandalone(item, margin);
         }
 
         item.status = "listed";
         item.listedPrice = listing.price;
         item.listedAt ??= now;
         item.updatedAt = now;
-        if (item.bundleId) touched.add(item.bundleId);
+        touched.add(item.bundleId);
         if (listing.status === "sold") toSell.push({ item, price: listing.price });
       }
 
@@ -536,16 +482,8 @@ const trackerSlice = createSlice({
         }
       }
 
-      // Recalculate bundle items
       for (const bundle of state.bundles) {
         recalculateAllocations(bundle, state.items, action.payload);
-      }
-
-      // Recalculate standalone items
-      for (const item of state.items) {
-        if (!item.bundleId && item.status !== "sold" && !item.marginOverridden) {
-          recalculateStandalone(item, action.payload);
-        }
       }
     },
 
@@ -591,15 +529,18 @@ const trackerSlice = createSlice({
           source: item.source ?? item.bundleSource ?? "other",
           purchaseCost: item.purchaseCost ?? item.allocatedPurchaseCost ?? 0,
           allocatedCostShare: item.allocatedCostShare ?? item.allocatedExtraCostShare ?? 0,
-          costs: item.costs ?? [],
           saleCosts: item.saleCosts ?? [],
-          bundleId: item.bundleId ?? undefined,
         }));
         const bundles = (tracker.bundles ?? []).map((bundle: any) => ({
           ...bundle,
           costs: bundle.costs ?? bundle.extraCosts ?? [],
         }));
-        return { ...initialState, ...tracker, items, bundles, filters: defaultFilters };
+        return {
+          ...initialState,
+          ...tracker,
+          ...toPurchases(bundles, items),
+          filters: defaultFilters,
+        };
       }
       return initialState;
     });
@@ -611,7 +552,6 @@ export const {
   updateBundle,
   deleteBundle,
   addBundleItems,
-  addStandaloneItem,
   importListings,
   updateItem,
   deleteItem,

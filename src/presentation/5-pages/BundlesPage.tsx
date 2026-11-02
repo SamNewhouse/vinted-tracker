@@ -18,7 +18,9 @@ const SORT_OPTIONS = [
 const BundlesPage: FC = () => {
   const dispatch = useAppDispatch();
   const filters = useAppSelector((s) => s.tracker.filters);
-  const bundleCount = useAppSelector((s) => s.tracker.bundles.length);
+  const bundleCount = useAppSelector(
+    (s) => s.tracker.bundles.filter((b) => b.kind === "bundle").length,
+  );
 
   return (
     <div className="space-y-6">
